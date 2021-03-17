@@ -4,7 +4,7 @@
         xsi:schemaLocation="http://thelia.net/schema/dic/module http://thelia.net/schema/dic/module/module-2_2.xsd">
     <fullnamespace>EasyOrderManager\EasyOrderManager</fullnamespace>
     <descriptive locale="en_US">
-        <title>Automatically generated module - please update module.xml file</title>
+        <title>Easy Order Manager</title>
         <!--
         <subtitle></subtitle>
         <description></description>
@@ -12,7 +12,7 @@
         -->
     </descriptive>
     <descriptive locale="fr_FR">
-        <title>Module généré automatiquement - éditez le fichier module.xml</title>
+        <title>Easy Order Manager</title>
     </descriptive>
     <!-- <logo></logo> -->
     <!--<images-folder>images</images-folder>-->
@@ -20,11 +20,19 @@
         <language>en_US</language>
         <language>fr_FR</language>
     </languages>
-    <version></version>
+    <version>1.0.0</version>
     <authors>
         <author>
-            <name></name>
-            <email></email>
+            <name>Jules Cournut</name>
+            <email>jcournut@openstudio.fr</email>
+        </author>
+        <author>
+            <name>Bertrand Tourlonias</name>
+            <email>btourlonias@openstudio.fr</email>
+        </author>
+        <author>
+            <name>Gilles Bourgeat</name>
+            <email>gilles.bourgeat@gmail.com</email>
         </author>
     </authors>
     <type>classic</type>
