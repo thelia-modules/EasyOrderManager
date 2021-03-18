@@ -86,14 +86,22 @@
                             </select>
                         </div>
                     </div>
+
+                </div>
+                <div class="row">
+                    {foreach from=$template_fields item=template}
+                    {include $template}
+                    {/foreach}
+                </div>
+                <div class="row">
                     <div class="col-md-12 filter">
                         <table class="js-list table table-striped table-bordered">
                             <thead>
                             <tr>
                                 {foreach from=$columnsDefinition item=definition}
-                                    <td>
-                                        {$definition.title}
-                                    </td>
+                                <td>
+                                    {$definition.title}
+                                </td>
                                 {/foreach}
                             </tr>
                             </thead>
@@ -101,11 +109,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div class="row">
-                    {foreach from=$template_fields item=template}
-                        {include $template}
-                    {/foreach}
                 </div>
 
             </div>
