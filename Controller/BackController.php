@@ -18,37 +18,25 @@ use EasyOrderManager\Event\BeforeFilterEvent;
 use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Thelia\Controller\Admin\ProductController;
-use Thelia\Core\Event\Image\ImageEvent;
-use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\HttpFoundation\JsonResponse;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Thelia;
 use Thelia\Core\Translation\Translator;
-use Thelia\Model\CountryQuery;
-use Thelia\Model\CurrencyQuery;
-use Thelia\Model\Lang;
-use Thelia\Model\LangQuery;
 use Thelia\Model\Map\CustomerTableMap;
 use Thelia\Model\Map\OrderAddressTableMap;
 use Thelia\Model\Map\OrderTableMap;
-use Thelia\Model\Map\ProductI18nTableMap;
-use Thelia\Model\Map\ProductSaleElementsTableMap;
-use Thelia\Model\Map\ProductTableMap;
 use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
-use Thelia\Model\Product;
-use Thelia\Model\ProductImageQuery;
-use Thelia\Model\ProductQuery;
-use Thelia\TaxEngine\Calculator;
 use Thelia\Tools\MoneyFormat;
 use Thelia\Tools\URL;
 
 class BackController extends ProductController
 {
+    protected const ORDER_INVOICE_ADDRESS_JOIN = 'orderInvoiceAddressJoin';
+
     public function listAction(Request $request)
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
@@ -59,7 +47,10 @@ class BackController extends ProductController
 
             $locale = $this->getRequest()->getSession()->getLang()->getLocale();
 
-            $query = OrderQuery::create();
+            // Use Customer for email column in applySearchCustomer
+            $query = OrderQuery::create()
+                ->useCustomerQuery()
+                ->endUse();
 
             $this->applyOrder($request, $query);
 
@@ -312,16 +303,19 @@ class BackController extends ProductController
         $value = $this->getSearchValue($request, 'searchCompany');
 
         if (strlen($value) > 2) {
-            $orderInvoiceAddressJoin = new Join(
-                OrderTableMap::COL_INVOICE_ORDER_ADDRESS_ID,
-                OrderAddressTableMap::ID,
-                Criteria::INNER_JOIN
-            );
+            if (!$query->hasJoin($this::ORDER_INVOICE_ADDRESS_JOIN)) {
+                $orderInvoiceAddressJoin = new Join(
+                    OrderTableMap::COL_INVOICE_ORDER_ADDRESS_ID,
+                    OrderAddressTableMap::COL_ID,
+                    Criteria::INNER_JOIN
+                );
 
-            $query->addJoinObject($orderInvoiceAddressJoin, 'orderInvoiceAddressJoin');
+                $query->addJoinObject($orderInvoiceAddressJoin, $this::ORDER_INVOICE_ADDRESS_JOIN);
+            }
+
             $query->addJoinCondition(
-                'orderInvoiceAddressJoin',
-                OrderAddressTableMap::COMPANY . " LIKE '%" . $value . "%'"
+                $this::ORDER_INVOICE_ADDRESS_JOIN,
+                OrderAddressTableMap::COL_COMPANY . " LIKE '%" . $value . "%'"
             );
         }
     }
@@ -331,18 +325,18 @@ class BackController extends ProductController
         $value = $this->getSearchValue($request, 'searchCustomer');
 
         if (strlen($value) > 2) {
-            // Join customer
-            $orderAddressJoin = new Join(
-                OrderTableMap::COL_INVOICE_ORDER_ADDRESS_ID,
-                OrderAddressTableMap::ID,
-                Criteria::INNER_JOIN
-            );
+            if (!$query->hasJoin($this::ORDER_INVOICE_ADDRESS_JOIN)) {
+                $orderInvoiceAddressJoin = new Join(
+                    OrderTableMap::COL_INVOICE_ORDER_ADDRESS_ID,
+                    OrderAddressTableMap::COL_ID,
+                    Criteria::INNER_JOIN
+                );
 
-            $query->useCustomerQuery()
-                ->endUse();
-            $query->addJoinObject($orderAddressJoin, 'orderAddressJoin');
+                $query->addJoinObject($orderInvoiceAddressJoin, $this::ORDER_INVOICE_ADDRESS_JOIN);
+            }
+
             $query->addJoinCondition(
-                'orderAddressJoin',
+                $this::ORDER_INVOICE_ADDRESS_JOIN,
                 '('.OrderAddressTableMap::COL_FIRSTNAME." LIKE '%".$value."%' OR ".
                 OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
                 CustomerTableMap::COL_EMAIL." LIKE '%".$value."%')"
