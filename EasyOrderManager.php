@@ -18,6 +18,6 @@ class EasyOrderManager extends BaseModule
 {
     /** @var string */
     const DOMAIN_NAME = 'easyordermanager';
-    const MODULE_VERSION = '1.0.0';
+    const MODULE_VERSION = '1.0.1';
     const MODULE_NAME = 'EasyOrderManager';
 }
