@@ -89,6 +89,54 @@
 
                 </div>
                 <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label" for="js-input-created-at-from">
+                                Création : À partir du
+                            </label>
+
+                            <div class="input-group">
+                                <input type="date" id="js-input-created-at-from" class="form-control js-refresh-table" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label" for="js-input-created-at-to">
+                                Jusqu'au
+                            </label>
+
+                            <div class="input-group">
+                                <input type="date" id="js-input-created-at-to" class="form-control js-refresh-table" value="" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label" for="js-input-invoice-date-from">
+                                Facturation : À partir du
+                            </label>
+
+                            <div class="input-group">
+                                <input type="date" id="js-input-invoice-date-from" class="form-control js-refresh-table" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label" for="js-input-invoice-date-to">
+                                Jusqu'au
+                            </label>
+
+                            <div class="input-group">
+                                <input type="date" id="js-input-invoice-date-to" class="form-control js-refresh-table" value="" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
                     {foreach from=$template_fields item=template}
                     {include $template}
                     {/foreach}
@@ -216,6 +264,10 @@
                         data.filter = {
                             status: $module.find('#js-input-status').val(),
                             paymentModuleId: $module.find('#js-input-payment-module').val(),
+                            createdAtFrom: $module.find('#js-input-created-at-from').val(),
+                            createdAtTo: $module.find('#js-input-created-at-to').val(),
+                            invoiceDateFrom: $module.find('#js-input-invoice-date-from').val(),
+                            invoiceDateTo: $module.find('#js-input-invoice-date-to').val(),
                             searchOrder: $module.find('#js-input-search-order').val(),
                             searchCompany: $module.find('#js-input-search-company').val(),
                             searchCustomer: $module.find('#js-input-search-customer').val(),

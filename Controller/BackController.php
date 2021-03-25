@@ -61,6 +61,8 @@ class BackController extends ProductController
 
             $this->filterByStatus($request, $query);
             $this->filterByPaymentModule($request, $query);
+            $this->filterByCreatedAt($request, $query);
+            $this->filterByInvoiceDate($request, $query);
 
             $this->applySearchOrder($request, $query);
             $this->applySearchCompany($request, $query);
@@ -283,6 +285,26 @@ class BackController extends ProductController
     {
         if (0 !== $paymentModuleId = (int) $request->get('filter')['paymentModuleId']) {
             $query->filterByPaymentModuleId($paymentModuleId);
+        }
+    }
+
+    protected function filterByCreatedAt(Request $request, OrderQuery $query)
+    {
+        if ('' !== $createdAtFrom = $request->get('filter')['createdAtFrom']) {
+            $query->filterByInvoiceDate(sprintf("%s 00:00:00", $createdAtFrom), Criteria::GREATER_EQUAL);
+        }
+        if ('' !== $createdAtTo = $request->get('filter')['createdAtTo']) {
+            $query->filterByInvoiceDate(sprintf("%s 23:59:59", $createdAtTo), Criteria::LESS_EQUAL);
+        }
+    }
+
+    protected function filterByInvoiceDate(Request $request, OrderQuery $query)
+    {
+        if ('' !== $invoiceDateFrom = $request->get('filter')['invoiceDateFrom']) {
+            $query->filterByCreatedAt(sprintf("%s 00:00:00", $invoiceDateFrom), Criteria::GREATER_EQUAL);
+        }
+        if ('' !== $invoiceDateTo = $request->get('filter')['invoiceDateTo']) {
+            $query->filterByCreatedAt(sprintf("%s 23:59:59", $invoiceDateTo), Criteria::LESS_EQUAL);
         }
     }
 
