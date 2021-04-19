@@ -34,5 +34,4 @@ TemplateFieldEvent::ORDER_MANAGER_TEMPLATE_FIELD
 In BeforeFilterEvent you have access to the order query and request.
 
 In TemplateFieldEvent you can use the function addTemplateField(fieldName, templateName) 
-to add a template with your new filter in it. You just need to add `js-filter-element` class to your filter input.
-Make sure that fieldName is one of the column names defined in BackController defineColumnsDefinition() of this module. 
+to add a template with your new filter in it. You just need to add `js-filter-element` class to your filter input. 
