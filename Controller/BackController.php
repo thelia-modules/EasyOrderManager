@@ -18,6 +18,8 @@ use EasyOrderManager\Event\BeforeFilterEvent;
 use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Controller\Admin\ProductController;
 use Thelia\Core\HttpFoundation\JsonResponse;
 use Thelia\Core\HttpFoundation\Request;
@@ -32,20 +34,27 @@ use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
 use Thelia\Tools\MoneyFormat;
 use Thelia\Tools\URL;
+use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * @Route("/admin/easy-order-manager", name="admin_easy_order_manager")
+ */
 class BackController extends ProductController
 {
     protected const ORDER_INVOICE_ADDRESS_JOIN = 'orderInvoiceAddressJoin';
 
-    public function listAction(Request $request)
+    /**
+     * @Route("/list", name="_list", methods={"GET","POST"})
+     */
+    public function listAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher)
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
             return $response;
         }
-
+        $request = $requestStack->getCurrentRequest();
         if ($request->isXmlHttpRequest()) {
 
-            $locale = $this->getRequest()->getSession()->getLang()->getLocale();
+            $locale = $request->getSession()->getLang()->getLocale();
 
             // Use Customer for email column in applySearchCustomer
             $query = OrderQuery::create()
@@ -57,7 +66,7 @@ class BackController extends ProductController
             $queryCount = clone $query;
 
             $beforeFilterEvent = new BeforeFilterEvent($request, $query);
-            $this->getDispatcher()->dispatch(BeforeFilterEvent::ORDER_MANAGER_BEFORE_FILTER, $beforeFilterEvent);
+            $dispatcher->dispatch($beforeFilterEvent, BeforeFilterEvent::ORDER_MANAGER_BEFORE_FILTER);
 
             $this->filterByStatus($request, $query);
             $this->filterByPaymentModule($request, $query);
@@ -131,7 +140,7 @@ class BackController extends ProductController
         }
 
         $templateFieldEvent = new TemplateFieldEvent();
-        $this->getDispatcher()->dispatch(TemplateFieldEvent::ORDER_MANAGER_TEMPLATE_FIELD, $templateFieldEvent);
+        $dispatcher->dispatch($templateFieldEvent, TemplateFieldEvent::ORDER_MANAGER_TEMPLATE_FIELD);
 
         return $this->render('EasyOrderManager/list', [
             'columnsDefinition' => $this->defineColumnsDefinition(),
