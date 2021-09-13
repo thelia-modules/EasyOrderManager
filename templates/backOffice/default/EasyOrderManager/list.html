@@ -186,8 +186,8 @@
     {* Cancel order confirmation dialog *}
 
     {capture "cancel_order_dialog"}
-    <input type="hidden" name="order_page" value="{$order_page}">
-    <input type="hidden" name="status" value="{$view_status}">
+    <input type="hidden" name="order_page" value="{$order_page|default:null}">
+    <input type="hidden" name="status" value="{$view_status|default:null}">
 
     <input type="hidden" name="order_id" id="cancel_order_id" value="" />
     <input type="hidden" name="status_id" value="5" />
@@ -235,7 +235,7 @@
 
             $( "#js-input-brand" ).select2();
 
-            var currencySymbol = '{$currencySymbol}';
+            var currencySymbol = '{$currencySymbol|default:null}';
 
             var tv = '{$theliaVersion}',
                 mv = '{$moduleVersion}',
