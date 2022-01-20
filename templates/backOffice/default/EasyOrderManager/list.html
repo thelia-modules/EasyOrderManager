@@ -136,6 +136,11 @@
                         </div>
                     </div>
                 </div>
+                <div class="pull-right">
+                    <a class="btn btn-success action-btn" id="js-export-order" href="#" data-toggle="modal">
+                        Export CSV
+                    </a>
+                </div>
                 <div class="row">
                     {foreach from=$template_fields item=template}
                     {include $template}
@@ -649,6 +654,29 @@
                $module.find('#modal-info').modal('show');
                $(this).removeClass('js-animate-info-button');
            });
+
+            $('#js-export-order').on('click', function(){
+                let filters = {
+                    status: $module.find('#js-input-status').val(),
+                    paymentModuleId: $module.find('#js-input-payment-module').val(),
+                    createdAtFrom: $module.find('#js-input-created-at-from').val(),
+                    createdAtTo: $module.find('#js-input-created-at-to').val(),
+                    invoiceDateFrom: $module.find('#js-input-invoice-date-from').val(),
+                    invoiceDateTo: $module.find('#js-input-invoice-date-to').val(),
+                    searchOrder: $module.find('#js-input-search-order').val(),
+                    searchCompany: $module.find('#js-input-search-company').val(),
+                    searchCustomer: $module.find('#js-input-search-customer').val(),
+                };
+                [...document.querySelectorAll(".js-filter-element")].forEach(el => {
+                    filters[el.name] = el.value
+                });
+
+                const queryString = Object.keys(filters).map(function(key) {
+                    return 'filter%5B' + key + '%5D=' + filters[key]
+                }).join('&');
+
+                window.open('/admin/easy-order-manager/list/csv?' + queryString, '_blank');
+            });
 
             window.addEventListener("message", function(event){
                 if (event.origin === "https://www.gilles-bourgeat.fr" && event.data === 'new') {
