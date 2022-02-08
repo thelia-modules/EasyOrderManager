@@ -361,6 +361,8 @@ class BackController extends ProductController
                 $this::ORDER_INVOICE_ADDRESS_JOIN,
                 '('.OrderAddressTableMap::COL_FIRSTNAME." LIKE '%".$value."%' OR ".
                 OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
+                OrderAddressTableMap::COL_PHONE." LIKE '%".$value."%' OR ".
+                OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
                 CustomerTableMap::COL_EMAIL." LIKE '%".$value."%')"
             );
 
