@@ -46,7 +46,7 @@ class BackController extends ProductController
     /**
      * @Route("/list", name="_list", methods={"GET","POST"})
      */
-    public function listAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher)
+    public function listAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher): JsonResponse
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
             return $response;
@@ -155,7 +155,7 @@ class BackController extends ProductController
      * @param Request $request
      * @return string
      */
-    protected function getOrderColumnName(Request $request)
+    protected function getOrderColumnName(Request $request): string
     {
         $columnDefinition = $this->defineColumnsDefinition(true)[
         (int) $request->get('order')[0]['column']
@@ -164,7 +164,12 @@ class BackController extends ProductController
         return $columnDefinition['orm'];
     }
 
-    protected function applyOrder(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function applyOrder(Request $request, OrderQuery $query): void
     {
         $query->orderBy(
             $this->getOrderColumnName($request),
@@ -176,7 +181,7 @@ class BackController extends ProductController
      * @param Request $request
      * @return string
      */
-    protected function getOrderDir(Request $request)
+    protected function getOrderDir(Request $request): string
     {
         return (string) $request->get('order')[0]['dir'] === 'asc' ? Criteria::ASC : Criteria::DESC;
     }
@@ -185,7 +190,7 @@ class BackController extends ProductController
      * @param Request $request
      * @return int
      */
-    protected function getLength(Request $request)
+    protected function getLength(Request $request): int
     {
         return (int) $request->get('length');
     }
@@ -194,7 +199,7 @@ class BackController extends ProductController
      * @param Request $request
      * @return int
      */
-    protected function getOffset(Request $request)
+    protected function getOffset(Request $request): int
     {
         return (int) $request->get('start');
     }
@@ -204,7 +209,7 @@ class BackController extends ProductController
      * @param Request $request
      * @return int
      */
-    protected function getDraw(Request $request)
+    protected function getDraw(Request $request): int
     {
         return (int) $request->get('draw');
     }
@@ -213,7 +218,7 @@ class BackController extends ProductController
      * @param bool $withPrivateData
      * @return array
      */
-    protected function defineColumnsDefinition($withPrivateData = false)
+    protected function defineColumnsDefinition($withPrivateData = false): array
     {
         $i = -1;
 
@@ -283,21 +288,36 @@ class BackController extends ProductController
         return $definitions;
     }
 
-    protected function filterByStatus(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function filterByStatus(Request $request, OrderQuery $query): void
     {
         if (0 !== $statusId = (int) $request->get('filter')['status']) {
             $query->filterByStatusId($statusId);
         }
     }
 
-    protected function filterByPaymentModule(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function filterByPaymentModule(Request $request, OrderQuery $query): void
     {
         if (0 !== $paymentModuleId = (int) $request->get('filter')['paymentModuleId']) {
             $query->filterByPaymentModuleId($paymentModuleId);
         }
     }
 
-    protected function filterByCreatedAt(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function filterByCreatedAt(Request $request, OrderQuery $query): void
     {
         if ('' !== $createdAtFrom = $request->get('filter')['createdAtFrom']) {
             $query->filterByInvoiceDate(sprintf("%s 00:00:00", $createdAtFrom), Criteria::GREATER_EQUAL);
@@ -307,7 +327,12 @@ class BackController extends ProductController
         }
     }
 
-    protected function filterByInvoiceDate(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function filterByInvoiceDate(Request $request, OrderQuery $query): void
     {
         if ('' !== $invoiceDateFrom = $request->get('filter')['invoiceDateFrom']) {
             $query->filterByCreatedAt(sprintf("%s 00:00:00", $invoiceDateFrom), Criteria::GREATER_EQUAL);
@@ -317,7 +342,12 @@ class BackController extends ProductController
         }
     }
 
-    protected function applySearchOrder(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function applySearchOrder(Request $request, OrderQuery $query): void
     {
         $value = $this->getSearchValue($request, 'searchOrder');
 
@@ -329,7 +359,12 @@ class BackController extends ProductController
         }
     }
 
-    protected function applySearchCompany(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function applySearchCompany(Request $request, OrderQuery $query): void
     {
         $value = $this->getSearchValue($request, 'searchCompany');
 
@@ -351,9 +386,15 @@ class BackController extends ProductController
         }
     }
 
-    protected function applySearchCustomer(Request $request, OrderQuery $query)
+    /**
+     * @param Request $request
+     * @param OrderQuery $query
+     * @return void
+     */
+    protected function applySearchCustomer(Request $request, OrderQuery $query): void
     {
         $value = $this->getSearchValue($request, 'searchCustomer');
+        $value = str_replace(array('+33', ' '), array('0', ''), $value);
 
         if (strlen($value) > 2) {
             if (!$query->hasJoin($this::ORDER_INVOICE_ADDRESS_JOIN)) {
@@ -370,6 +411,8 @@ class BackController extends ProductController
                 $this::ORDER_INVOICE_ADDRESS_JOIN,
                 '('.OrderAddressTableMap::COL_FIRSTNAME." LIKE '%".$value."%' OR ".
                 OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
+                OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
+                OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
                 CustomerTableMap::COL_EMAIL." LIKE '%".$value."%')"
             );
 
@@ -377,7 +420,12 @@ class BackController extends ProductController
         }
     }
 
-    protected function getSearchValue(Request $request, $searchKey)
+    /**
+     * @param Request $request
+     * @param $searchKey
+     * @return string
+     */
+    protected function getSearchValue(Request $request, $searchKey): string
     {
         return (string) $request->get($searchKey)['value'];
     }
