@@ -19,6 +19,7 @@ use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Controller\Admin\ProductController;
 use Thelia\Core\HttpFoundation\JsonResponse;
@@ -46,7 +47,7 @@ class BackController extends ProductController
     /**
      * @Route("/list", name="_list", methods={"GET","POST"})
      */
-    public function listAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher): JsonResponse
+    public function listAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
             return $response;
@@ -394,7 +395,8 @@ class BackController extends ProductController
     protected function applySearchCustomer(Request $request, OrderQuery $query): void
     {
         $value = $this->getSearchValue($request, 'searchCustomer');
-        $value = str_replace(array('+33', ' '), array('0', ''), $value);
+        $value = $value[0] === '0' ? substr($value, 1) : $value;
+        $value = str_replace('+33', '', $value);
 
         if (strlen($value) > 2) {
             if (!$query->hasJoin($this::ORDER_INVOICE_ADDRESS_JOIN)) {
@@ -413,6 +415,8 @@ class BackController extends ProductController
                 OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
                 OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
                 OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
+                OrderAddressTableMap::COL_PHONE." LIKE '%".$value."%' OR ".
+                OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
                 CustomerTableMap::COL_EMAIL." LIKE '%".$value."%')"
             );
 
