@@ -395,10 +395,12 @@ class BackController extends ProductController
     protected function applySearchCustomer(Request $request, OrderQuery $query): void
     {
         $value = $this->getSearchValue($request, 'searchCustomer');
-        $value = $value[0] === '0' ? substr($value, 1) : $value;
-        $value = str_replace('+33', '', $value);
 
         if (strlen($value) > 2) {
+
+            $value = $value[0] === '0' ? substr($value, 1) : $value;
+            $value = str_replace('+33', '', $value);
+
             if (!$query->hasJoin($this::ORDER_INVOICE_ADDRESS_JOIN)) {
                 $orderInvoiceAddressJoin = new Join(
                     OrderTableMap::COL_INVOICE_ORDER_ADDRESS_ID,
