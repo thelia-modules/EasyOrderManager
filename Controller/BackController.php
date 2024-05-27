@@ -85,7 +85,7 @@ class BackController extends ProductController
 
             $query->offset($this->getOffset($request));
 
-            $orders = $query->limit($this->getLength($request))->find();
+            $orders = $query->limit(25)->find();
 
             $json = [
                 "draw"=> $this->getDraw($request),
