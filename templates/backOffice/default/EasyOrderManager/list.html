@@ -5,32 +5,32 @@
 {block name="page-title"}Gestion des commandes avec EasyOrderManager{/block}
 
 {block name="after-admin-css"}
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css" rel="stylesheet" />
-    <style>
-        {literal}
-        .js-list {
-            width: 100% !important;
-        }
-        .js-animate-info-button {
-            animation: AnimateInfoButton 2s infinite;
-        }
-        @keyframes AnimateInfoButton{
-            0%{opacity: 1;}
-            50%{opacity: 0;}
-            100%{opacity: 1;}
-        }
-        {/literal}
-    </style>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css" rel="stylesheet" />
+<style>
+    {literal}
+    .js-list {
+        width: 100% !important;
+    }
+    .js-animate-info-button {
+        animation: AnimateInfoButton 2s infinite;
+    }
+    @keyframes AnimateInfoButton{
+        0%{opacity: 1;}
+        50%{opacity: 0;}
+        100%{opacity: 1;}
+    }
+    {/literal}
+</style>
 {/block}
 
 {block name="main-content"}
-    <div id="module-easy-order-manager">
+<div id="module-easy-order-manager">
 
-        <div id="wrapper" class="container">
+    <div id="wrapper" class="container">
 
-          <div class="row">
+        <div class="row">
             <div class="col-md-12 general-block-decorator">
 
                 <div class="row">
@@ -137,6 +137,13 @@
                     </div>
                 </div>
                 <div class="row">
+                    <div class="col-md-2 filter">
+                        <div class="form-group">
+                            <button id="delete-selected-items" class="btn btn-danger">Supprimer les éléments sélectionnés</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
                     {foreach from=$template_fields item=template}
                     {include $template}
                     {/foreach}
@@ -148,7 +155,7 @@
                             <tr>
                                 {foreach from=$columnsDefinition item=definition}
                                 <td>
-                                    {$definition.title}
+                                    {$definition.title nofilter}
                                 </td>
                                 {/foreach}
                             </tr>
@@ -160,504 +167,415 @@
                 </div>
 
             </div>
-          </div>
-
         </div>
 
-        <!-- Modal Info -->
-        <div class="modal fade" id="modal-info" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Informations module</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <iframe width="100%" frameborder="0" height="300" src="https://www.gilles-bourgeat.fr/thelia/module/easy-product-manager?tv={$theliaVersion}&mv={$moduleVersion}&mn={$moduleName}&lang={$app->request->getSession()->getLang()->getLocale()}">
+    </div>
 
-                        </iframe>
-                    </div>
+    <!-- Modal Info -->
+    <div class="modal fade" id="modal-info" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Informations module</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <iframe width="100%" frameborder="0" height="300" src="https://www.gilles-bourgeat.fr/thelia/module/easy-product-manager?tv={$theliaVersion}&mv={$moduleVersion}&mn={$moduleName}&lang={$app->request->getSession()->getLang()->getLocale()}">
+                    </iframe>
                 </div>
             </div>
         </div>
-
-    {* Cancel order confirmation dialog *}
-
-    {capture "cancel_order_dialog"}
-    <input type="hidden" name="order_page" value="{$order_page|default:null}">
-    <input type="hidden" name="status" value="{$view_status|default:null}">
-
-    <input type="hidden" name="order_id" id="cancel_order_id" value="" />
-    <input type="hidden" name="status_id" value="5" />
-    {/capture}
-
-    {include
-    file = "includes/generic-confirm-dialog.html"
-
-    dialog_id       = "cancel_order_dialog"
-    dialog_title    = {intl l="Delete an order"}
-    dialog_message  = {intl l="Do you really want to cancel this order ?"}
-
-    form_action         = {token_url path='/admin/order/update/status'}
-    form_content        = {$smarty.capture.cancel_order_dialog nofilter}
-    form_id             = "cancel-order-form"
-    }
-
     </div>
+
+    <!-- Modal Confirm Delete Selected Orders -->
+    <div class="modal fade" id="modal-delete-selected" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Supprimer les commandes sélectionnées</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Êtes-vous sûr de vouloir supprimer les commandes sélectionnées ?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-danger" id="confirm-delete-selected">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-order-not-paid" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Commande non payable</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>La commande ne peut pas être supprimée car elle n'est pas payée.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 {/block}
 
 {block name="javascript-last-call"}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
-    {*<script src="https://cdnjs.cloudflare.com/ajax/libs/history.js/1.8/bundled/html4+html5/jquery.history.min.jss"></script>*}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+{*<script src="https://cdnjs.cloudflare.com/ajax/libs/history.js/1.8/bundled/html4+html5/jquery.history.min.jss"></script>*}
 
-    <script>
-        "use strict";
-        (function($, $module){
-            {* Ajout btn module info *}
-            $('#page-wrapper .page-header').append('<button class="btn btn-info js-module-easy-order-manager-info pull-right"><i class="glyphicon glyphicon-info-sign"></i></button>');
+<script>
+    "use strict";
+    (function($, $module) {
+        // Ajout du bouton d'information du module
+        $('#page-wrapper .page-header').append('<button class="btn btn-info js-module-easy-order-manager-info pull-right"><i class="glyphicon glyphicon-info-sign"></i></button>');
 
-            //$.fn.select2.defaults.set( "theme", "bootstrap" );
+        var table = $module.find('.js-list').DataTable({
+            processing: true,
+            serverSide: true,
+            searching: false,
+            lengthChange: false,
+            scrollX: true,
+            order: [[1, "desc"]],
+            ajax: {
+                url: "{url current=true}",
+                method: 'POST',
+                data: function(data) {
+                    // Ajouter des informations de debug
+                    console.log('Fetching data with filter:', data.filter);
 
-            $( "#js-input-feature" ).select2( {
-                placeholder: 'Filter par caractéristique'
-            } );
+                    data.filter = {
+                        status: $module.find('#js-input-status').val(),
+                        paymentModuleId: $module.find('#js-input-payment-module').val(),
+                        createdAtFrom: $module.find('#js-input-created-at-from').val(),
+                        createdAtTo: $module.find('#js-input-created-at-to').val(),
+                        invoiceDateFrom: $module.find('#js-input-invoice-date-from').val(),
+                        invoiceDateTo: $module.find('#js-input-invoice-date-to').val(),
+                        searchOrder: $module.find('#js-input-search-order').val(),
+                        searchCompany: $module.find('#js-input-search-company').val(),
+                        searchCustomer: $module.find('#js-input-search-customer').val(),
+                    };
 
-            $( "#js-input-attribute" ).select2( {
-                placeholder: 'Filtrer par attribut'
-            } );
+                    [...document.querySelectorAll(".js-filter-element")].forEach(el => {
+                        data.filter[el.name] = el.value;
+                    });
 
-            $( "#js-input-category" ).select2();
+                    data.searchOrder = {
+                        "value": $module.find('#js-input-search-order').val(),
+                        regex: false
+                    };
 
-            $( "#js-input-brand" ).select2();
+                    data.searchCompany = {
+                        "value": $module.find('#js-input-search-company').val(),
+                        regex: false
+                    };
 
-            var currencySymbol = '{$currencySymbol|default:null}';
+                    data.searchCustomer = {
+                        "value": $module.find('#js-input-search-customer').val(),
+                        regex: false
+                    };
 
-            var tv = '{$theliaVersion}',
-                mv = '{$moduleVersion}',
-                mn = '{$moduleName}',
-                id = $module.attr('id'),
-                popoverPosition = null,
-                $modalDelete = $module.find('#cancel_order_dialog');
-
-
-            var table = $module.find('.js-list').DataTable( {
-                processing: true,
-                serverSide: true,
-                searching: false,
-                lengthChange: false,
-                scrollX: true,
-                order: [[ 0, "desc" ]],
-                drawCallback:function (oSettings) {
-                    // console.log(oSettings);
-                },
-                ajax: {
-                    ajax: "{url current=true}",
-                    method: 'POST',
-                    data: function (data) {
-                        resetPopoverPosition();
-
-                        data.filter = {
-                            status: $module.find('#js-input-status').val(),
-                            paymentModuleId: $module.find('#js-input-payment-module').val(),
-                            createdAtFrom: $module.find('#js-input-created-at-from').val(),
-                            createdAtTo: $module.find('#js-input-created-at-to').val(),
-                            invoiceDateFrom: $module.find('#js-input-invoice-date-from').val(),
-                            invoiceDateTo: $module.find('#js-input-invoice-date-to').val(),
-                            searchOrder: $module.find('#js-input-search-order').val(),
-                            searchCompany: $module.find('#js-input-search-company').val(),
-                            searchCustomer: $module.find('#js-input-search-customer').val(),
-                        };
-
-                        [...document.querySelectorAll(".js-filter-element")].forEach(el => {
-                            data.filter[el.name] = el.value
-                        });
-
-                        data.searchOrder = {
-                            "value": $module.find('#js-input-search-order').val(),
-                            regex: false
-                        };
-
-                        data.searchCompany = {
-                            "value": $module.find('#js-input-search-company').val(),
-                            regex: false
-                        };
-
-                        data.searchCustomer = {
-                            "value": $module.find('#js-input-search-customer').val(),
-                            regex: false
-                        };
-
-                        data.length = $module.find('#js-input-length').val();
+                    data.length = $module.find('#js-input-length').val();
+                }
+            },
+            displayLength: 25,
+            columnDefs: [
+                {
+                    className: "text-center",
+                    targets: 0,
+                    orderable: false,
+                    render: function(data, type, row, meta) {
+                        return '<input type="checkbox" class="select_order" data-id="' + (data ? data.order_ids : '') + '">';
                     }
                 },
-                displayLength: 25,
-                columnDefs: {$columnsDefinition|@json_encode nofilter}.concat([
-                    {
-                        className: "text-center",
-                        targets: [2,3,4,6],
-                        render: function ( data, type, row, meta ) {
-                            return data;
+                {
+                    className: "text-center",
+                    targets: 1,
+                    render: function(data, type, row, meta) {
+                        if (data && data.id) {
+                            return '<a href="' + data.id.href + '">' + data.id + '</a>';
                         }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 5,
-                        render: function ( data, type, row, meta ) {
-                            if (data !== '') {
-                                return '<a href="' + data['href'] + '">' + data['name'] + '</a>'
+                        return 'N/A';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 2,
+                    render: function(data, type, row, meta) {
+                        if (data && data.ref) {
+                            return '<a href="' + data.ref.href + '">' + data.ref + '</a>';
+                        }
+                        return 'N/A';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 3,
+                    render: function(data, type, row, meta) {
+                        return data ? data : 'N/A';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 4,
+                    render: function(data, type, row, meta) {
+                        return data ? data : 'N/A';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 5,
+                    render: function(data, type, row, meta) {
+                        if (data && data.href) {
+                            return '<a href="' + data.href + '">' + data + '</a>';
+                        }
+                        return 'N/A';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 6,
+                    render: function(data, type, row, meta) {
+                        if (data && data.href) {
+                            return '<a href="' + data.href + '">' + data.name + '</a>';
+                        }
+                        return 'N/A';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 7,
+                    render: function(data, type, row, meta) {
+                        return data ? data : 'N/A';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 8,
+                    render: function(data, type, row, meta) {
+                        if (data) {
+                            return '<span class="label" style="background-color: ' + data.color + ';">' + data.name + '</span>';
+                        }
+                        return 'N/A';
+                    }
+                },
+                {
+                    className: "text-right",
+                    targets: 9,
+                    render: function(data, type, row, meta) {
+                        var html = '';
+                        if (data) {
+                            if (data.hrefPrint) {
+                                html += '<a href="' + data.hrefPrint + '" class="btn btn-default" title="Imprimer">' +
+                                    '<i class="glyphicon glyphicon-print"></i>' +
+                                    '</a>';
                             }
-
-                            return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                        }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 0,
-                        render: function ( data, type, row, meta ) {
-                            if (data !== '') {
-                                return '<a href="' + data['href'] + '">' + data['id'] + '</a>'
+                            if (data.hrefUpdate) {
+                                html += '<a href="' + data.hrefUpdate + '" class="btn btn-info" title="Modifier">' +
+                                    '<i class="glyphicon glyphicon-edit"></i>' +
+                                    '</a>';
                             }
-
-                            return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                        }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 1,
-                        render: function ( data, type, row, meta ) {
-                            if (data !== '') {
-                                return '<a href="' + data['href'] + '">' + data['ref'] + '</a>'
-                            }
-
-                            return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                        }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 7,
-                        render: function ( data, type, row, meta ) {
-                            return '<span class="label" style="background-color: ' + data['color'] + ';">' + data['name'] + '</span>';
-                        }
-                    },
-                    {
-                        className: "text-right",
-                        targets: 8,
-                        render: function ( data, type, row, meta ) {
-                            var html = '<a href="' + data['hrefPrint'] + '" class="btn btn-default" title="Imprimer">' +
-                                '<i class="glyphicon glyphicon-print"></i>' +
-                                '</a>' +
-                                '<a href="' + data['hrefUpdate'] + '" class="btn btn-info" title="Modifier">' +
-                                '<i class="glyphicon glyphicon-edit"></i>' +
-                                '</a>';
-                            if (!data['isCancelled']) {
-                                html += ' <a href="#" class="btn btn-danger js-action-delete" title="Supprimer" data-id="' + data['order_id'] + '">' +
+                            if (!data.isCancelled) {
+                                html += '<a href="#" class="btn btn-danger js-action-delete" title="Supprimer" data-id="' + data.order_id + '">' +
                                     '<i class="glyphicon glyphicon-trash"></i>' +
                                     '</a>';
                             }
-                            return html;
                         }
+                        return html;
                     }
-            ]),
-                language: {
-                "sProcessing":     "Traitement en cours...",
-                    "sSearch":         "Rechercher&nbsp;:",
-                    "sLengthMenu":     "Afficher _MENU_ &eacute;l&eacute;ments",
-                    "sInfo":           "Affichage de l'&eacute;l&eacute;ment _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
-                    "sInfoEmpty":      "Affichage de l'&eacute;l&eacute;ment 0 &agrave; 0 sur 0 &eacute;l&eacute;ment",
-                    "sInfoFiltered":   "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
-                    "sInfoPostFix":    "",
-                    "sLoadingRecords": "Chargement en cours...",
-                    "sZeroRecords":    "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable":     "Aucune donn&eacute;e disponible dans le tableau",
-                    "oPaginate": {
-                    "sFirst":      "Premier",
-                        "sPrevious":   "Pr&eacute;c&eacute;dent",
-                        "sNext":       "Suivant",
-                        "sLast":       "Dernier"
+                }
+            ],
+            language: {
+                "sProcessing": "Traitement en cours...",
+                "sSearch": "Rechercher&nbsp;:",
+                "sLengthMenu": "Afficher _MENU_ &eacute;l&eacute;ments",
+                "sInfo": "Affichage de l'&eacute;l&eacute;ment _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
+                "sInfoEmpty": "Affichage de l'&eacute;l&eacute;ment 0 &agrave; 0 sur 0 &eacute;l&eacute;ment",
+                "sInfoFiltered": "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
+                "sLoadingRecords": "Chargement en cours...",
+                "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
+                "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
+                "oPaginate": {
+                    "sFirst": "Premier",
+                    "sPrevious": "Pr&eacute;c&eacute;dent",
+                    "sNext": "Suivant",
+                    "sLast": "Dernier"
                 },
                 "oAria": {
-                    "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre d&eacute;croissant"
+                    "sSortAscending": ": activer pour trier la colonne par ordre croissant",
+                    "sSortDescending": ": activer pour trier la colonne par ordre d&eacute;croissant"
                 }
             }
-            });
+        });
 
-            function resetPopoverPosition() {
-                if (popoverPosition !== null) {
-                    popoverPosition.popover('destroy');
-                }
+        function resetPopoverPosition() {
+            if (popoverPosition !== null) {
+                popoverPosition.popover('destroy');
+            }
+        }
+
+        var $modalDelete = $module.find('#modal-delete-selected');
+
+        // Gestion du clic sur le bouton de suppression
+        table.on('click', '.js-action-delete', function(e) {
+            e.preventDefault();
+            console.log('Delete button clicked');
+
+            var orderId = $(this).data('id');
+            console.log($(this).data);
+            var orderStatus = $(this).data('status');
+
+            if (orderStatus === 1) {
+                alert("Les commandes non payées ne peuvent pas être supprimées.");
+                return;
             }
 
-            var $modal = $module.find('#modal-edit-order');
-            var $modalLoader = $modal.find('.js-loader');
-            var $modalContent = $modal.find('.js-content');
-            var $modalError = $modal.find('.js-error');
-            var $modalSuccess = $modal.find('.js-success');
+            // Set proper order ID in delete form
+            $modalDelete.find('#cancel_order_id').val(orderId);
 
-            var filters = $module.find('.js-refresh-table');
-            function refreshFilter()
-            {
-                filters.each(function(){
-                    if ('undefined' !== typeof this.dataset.default) {
-                        var val = $(this).val();
-                        {* gestion cas select multiple *}
-                        if (val === null) {
-                            val = '';
-                        }
+            $modalDelete.modal('show');
+        });
 
-                        if (val !== this.dataset.default) {
-                            $(this).parents('.filter:eq(0)').css('backgroundColor', 'rgba(0, 102, 255, 0.1)');
-                        } else {
-                            $(this).parents('.filter:eq(0)').css('backgroundColor', '');
-                        }
-                    }
-                });
-            }
+// Gestion du formulaire de suppression
+        $modalDelete.on('submit', 'form', function(e) {
+            e.preventDefault();
+            console.log('Form submitted for deletion');
 
+            var selectedIds = [];
+            $('.select_order:checked').each(function() {
+                var orderId = $(this).data('id');
+                var orderStatus = $(this).data('status');
 
-            {* ajout timer pour éviter le spam ajax *}
-            var timer = null;
-            $module.find('.js-refresh-table').on('change keyup', function(event){
-                if (event.type === "keyup" ) {
-                    if (timer !== null) {
-                        clearTimeout(timer);
-                    }
-
-                    timer = setTimeout(function(){
-                        refreshFilter();
-                        table.ajax.reload();
-                    }, 350)
-                } else {
-                    refreshFilter();
-                    table.ajax.reload();
+                if (orderStatus === 1) {
+                    alert("Les commandes non payées ne peuvent pas être supprimées.");
+                    return;
                 }
+
+                selectedIds.push(orderId);
             });
 
-            table.on('click', '.js-edit-price, .js-edit-quantity', function(event){
-               event.preventDefault();
-
-                $modalContent.hide();
-                $modalError.hide();
-                $modalSuccess.hide();
-                $modalLoader.show();
-
-               var id = $(this).parents('tr').find('td:first').text();
-
-               $.ajax({
-                   url: '{url current=true}/' + id,
-                   success: function(data) {
-                       $modalContent.html(data);
-
-                       $modalLoader.hide();
-                       $modalContent.show();
-                   },
-                   error: function() {
-                       $modalError.show();
-                   }
-               });
-
-                $modal.modal('show');
-            });
-
-            $modal.on('submit', 'form', function(event){
-                event.preventDefault();
-
-                $modalContent.hide();
-                $modalLoader.show();
+            if (selectedIds.length > 0) {
+                console.log('Selected order IDs:', selectedIds);
 
                 $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'post',
-                    data: $(this).serialize(),
-                    success: function() {
-                        table.ajax.reload(null, false);
-                        $modalSuccess.show();
-                        $modalLoader.hide();
-
-                        setTimeout(function () {
-                            $modal.modal('hide');
-                        }, 200);
-                    },
-                    error: function() {
-                        $modalError.show();
-                        $modalLoader.hide();
-                    }
-                });
-            });
-
-            $modal.on('click', '.page-close-button', function(event){
-                event.preventDefault();
-                $modal.modal('hide');
-            });
-
-            table.on('change', '.js-action-visible', function(){
-                $.ajax({
-                    url : "{url path='admin/products/toggle-online'}",
-                    data : {
-                        product_id : $(this).parents('tr').find('td:first').text(),
-                        action : 'visibilityToggle'
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position-up', function(event){
-                event.preventDefault();
-                $.ajax({
-                    url: "{url path="/admin/orders/update-position"}",
-                    method: 'get',
-                    data: {
-                        mode: "up",
-                        category_id: $module.find('#js-input-category').val(),
-                        order_id: $(this).parents('tr').find('td:first').text()
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position-down', function(event){
-                event.preventDefault();
-                $.ajax({
-                    url: "{url path="/admin/orders/update-position"}",
-                    method: 'get',
-                    data: {
-                        mode: "down",
-                        order_id: $(this).parents('tr').find('td:first').text()
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position', function(event){
-                event.preventDefault();
-
-                resetPopoverPosition();
-
-                var currentPosition = $(this).text();
-
-                popoverPosition = $(this)
-                    .popover({
-                        html : true,
-                        placement: 'auto',
-                        title: function() {
-                            return 'Changer la position';
-                        },
-                        content: function() {
-                            return '<form class="form-inline js-form-position" data-product-id="' + $(this).parents('tr').find('td:first').text() + '">' +
-                                '  <div class="form-group">' +
-                                '    <div class="input-group">' +
-                                '      <input style="width: 70px;" type="number" class="form-control" min="0" value="' + currentPosition + '">' +
-                                '    </div>\n' +
-                                '  </div>\n' +
-                                '  <button type="submit" class="btn btn-primary">' +
-                                '<i class="glyphicon glyphicon-ok"></i>' +
-                                '</button>' +
-                                '<button type="button" class="btn btn-default btn-sm js-action-position-close"><i class="glyphicon glyphicon-remove"></i></button>' +
-                                '</form>';
-                        }
-                    }).popover('show');
-            });
-
-            table.on('submit', '.js-form-position', function(event){
-                event.preventDefault();
-                $.ajax({
-                    url: "{url path="/admin/orders/update-position"}",
-                    method: 'get',
-                    data: {
-                        position: $(this).find('input').val(),
-                        order_id: this.dataset.orderId
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position-close', function(event){
-                event.preventDefault();
-                resetPopoverPosition();
-            });
-
-            {* auto refresh *}
-            var interval = null;
-            function autoRefresh()
-            {
-                var ms = parseInt($module.find('#js-input-auto-refresh-interval').val()) * 1000;
-
-                interval = setTimeout(function(){
-                    table.ajax.reload(null, false);
-                    autoRefresh();
-                }, ms)
-            }
-
-            $module.find('#js-input-auto-refresh').on('change', function(event){
-                if (parseInt($(this).val())) {
-                    autoRefresh();
-                    document.getElementById('js-input-auto-refresh-interval').parentNode.parentNode.parentNode.style.backgroundColor = 'rgba(0, 102, 255, 0.1)';
-                    this.parentNode.parentNode.style.backgroundColor = 'rgba(0, 102, 255, 0.1)';
-                } else {
-                    clearInterval(interval);
-                    interval = null;
-                    document.getElementById('js-input-auto-refresh-interval').parentNode.parentNode.parentNode.style.backgroundColor = '';
-                    this.parentNode.parentNode.style.backgroundColor = '';
-                }
-            });
-            {* end auto refresh *}
-
-            table.on('click', '.js-action-delete', function(e){
-                e.preventDefault();
-
-                // Set proper order ID in delete form
-                $modalDelete.find('#cancel_order_id').val($(this).data('id'));
-
-                $modalDelete.modal('show');
-            });
-
-            $modalDelete.on('submit', 'form', function(e){
-                e.preventDefault();
-
-                $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'post',
-                    data: $(this).serialize(),
-                    success: function() {
+                    url: "/admin/easy-order-manager/delete-selected",
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ order_ids: selectedIds }),
+                    success: function(response) {
+                        console.log('Deletion successful, response:', response);
                         table.ajax.reload(null, false);
 
-                        setTimeout(function () {
+                        setTimeout(function() {
                             $modalDelete.modal('hide');
                         }, 200);
                     },
-                    error: function() {
-
+                    error: function(xhr, status, error) {
+                        console.log('Deletion failed, error:', error);
                     }
                 });
+            } else {
+                console.log('No orders selected for deletion');
+            }
+        });
+
+        $(document).ready(function() {
+            // Fonction pour gérer le clic sur le bouton "select-all"
+            $('#select-all').on('click', function() {
+                var rows = $('.js-list').DataTable().rows({ 'search': 'applied' }).nodes();
+                $('input[type="checkbox"]', rows).prop('checked', this.checked);
             });
 
-           /* $module.find('select.js-select2').select2({
-                language: "fr"
-            });*/
+            // Gestion de la suppression des éléments sélectionnés
+            $('#delete-selected-items').on('click', function() {
+                $('#modal-delete-selected').modal('show');
+            });
 
-           {* Modale information module *}
-           $('.js-module-easy-order-manager-info').on('click', function(){
-               $module.find('#modal-info').modal('show');
-               $(this).removeClass('js-animate-info-button');
-           });
+            $('#confirm-delete-selected').on('click', function() {
+                var selectedIds = [];
+                var hasCancelledOrder = false;
 
-            window.addEventListener("message", function(event){
-                if (event.origin === "https://www.gilles-bourgeat.fr" && event.data === 'new') {
-                    $(document).ready(function(){
-                        $('.js-module-easy-order-manager-info').addClass('js-animate-info-button');
-                    });
+                $('.select_order:checked').each(function() {
+                    var orderId = $(this).data('id');
+                    var orderStatus = $(this).data('status');
+
+                    if (orderStatus === 5) {
+                        hasCancelledOrder = true;
+                    } else {
+                        selectedIds.push(orderId);
+                    }
+                });
+
+                if (hasCancelledOrder) {
+                    alert('Les commandes annulées ne peuvent pas être supprimées.');
+                    return;
                 }
-            }, false);
 
-        }(jQuery, jQuery('#module-easy-order-manager')))
-    </script>
+                if (selectedIds.length > 0) {
+                    console.log('Selected order IDs for bulk deletion:', selectedIds);
+
+                    $.ajax({
+                        url: "/admin/easy-order-manager/delete-selected",
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ order_ids: selectedIds }),
+                        success: function(response) {
+                            var message = '';
+
+                            if (response.deleted_orders && response.deleted_orders.length > 0) {
+                                message += 'Les commandes suivantes ont été supprimées avec succès : ' + response.deleted_orders.join(', ') + '. ';
+                            }
+
+                            if (response.not_deleted_orders && response.not_deleted_orders.length > 0) {
+                                message += 'Les commandes suivantes n\'ont pas pu être supprimées : ' + response.not_deleted_orders.join(', ') + '.';
+                            }
+
+                            if (response.not_deleted_orders && response.not_deleted_orders.length > 0) {
+                                alert(message);
+                            }
+
+                            $('.js-list').DataTable().ajax.reload();
+                            $('#select-all').prop('checked', false); // Uncheck the "select-all" checkbox
+                            $('#modal-delete-selected').modal('hide');
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Une erreur est survenue : ' + error);
+                        }
+                    });
+                } else {
+                    alert('Aucune commande sélectionnée.');
+                }
+            });
+        });
+
+        // Modale information module
+        $('.js-module-easy-order-manager-info').on('click', function() {
+            $module.find('#modal-info').modal('show');
+            $(this).removeClass('js-animate-info-button');
+        });
+
+        window.addEventListener("message", function(event) {
+            if (event.origin === "https://www.gilles-bourgeat.fr" && event.data === 'new') {
+                $(document).ready(function() {
+                    $('.js-module-easy-order-manager-info').addClass('js-animate-info-button');
+                });
+            }
+        }, false);
+    }(jQuery, jQuery('#module-easy-order-manager')));
+</script>
 {/block}

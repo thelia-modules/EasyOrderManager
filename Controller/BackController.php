@@ -1,11 +1,11 @@
 <?php
 /*************************************************************************************/
-/*      This file is part of the module EasyProductManager.                          */
+/*      This file is part of the module EasyOrderManager.                            */
 /*                                                                                   */
 /*      Copyright (c) Gilles Bourgeat                                                */
 /*      email : gilles.bourgeat@gmail.com                                            */
 /*                                                                                   */
-/*      This module is not open source                                               /*
+/*      This module is not open source                                              */
 /*      please contact gilles.bourgeat@gmail.com for a license                       */
 /*                                                                                   */
 /*                                                                                   */
@@ -13,11 +13,14 @@
 
 namespace EasyOrderManager\Controller;
 
+use CreditNote\Model\CreditNoteQuery;
+use DelayManagement\Model\OrderDelayQuery;
 use EasyOrderManager\EasyOrderManager;
 use EasyOrderManager\Event\BeforeFilterEvent;
 use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
+use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -108,6 +111,9 @@ class BackController extends ProductController
                 $updateUrl = URL::getInstance()->absoluteUrl('admin/order/update/'.$order->getId());
 
                 $json['data'][] = [
+                    [
+                        'order_ids' => $order->getId(),
+                    ],
                     [
                         'id' => $order->getId(),
                         'href' => $updateUrl
@@ -225,6 +231,13 @@ class BackController extends ProductController
 
         $definitions = [
             [
+                'name' => 'checkbox',
+                'targets' => ++$i,
+                'title' =>  '<input type="checkbox" id="select-all" />',
+                'orderable' => false,
+                'searchable' => false,
+            ],
+            [
                 'name' => 'id',
                 'targets' => ++$i,
                 'orm' => OrderTableMap::COL_ID,
@@ -321,10 +334,10 @@ class BackController extends ProductController
     protected function filterByCreatedAt(Request $request, OrderQuery $query): void
     {
         if ('' !== $createdAtFrom = $request->get('filter')['createdAtFrom']) {
-            $query->filterByInvoiceDate(sprintf("%s 00:00:00", $createdAtFrom), Criteria::GREATER_EQUAL);
+            $query->filterByCreatedAt(sprintf("%s 00:00:00", $createdAtFrom), Criteria::GREATER_EQUAL);
         }
         if ('' !== $createdAtTo = $request->get('filter')['createdAtTo']) {
-            $query->filterByInvoiceDate(sprintf("%s 23:59:59", $createdAtTo), Criteria::LESS_EQUAL);
+            $query->filterByCreatedAt(sprintf("%s 23:59:59", $createdAtTo), Criteria::LESS_EQUAL);
         }
     }
 
@@ -336,10 +349,10 @@ class BackController extends ProductController
     protected function filterByInvoiceDate(Request $request, OrderQuery $query): void
     {
         if ('' !== $invoiceDateFrom = $request->get('filter')['invoiceDateFrom']) {
-            $query->filterByCreatedAt(sprintf("%s 00:00:00", $invoiceDateFrom), Criteria::GREATER_EQUAL);
+            $query->filterByInvoiceDate(sprintf("%s 00:00:00", $invoiceDateFrom), Criteria::GREATER_EQUAL);
         }
         if ('' !== $invoiceDateTo = $request->get('filter')['invoiceDateTo']) {
-            $query->filterByCreatedAt(sprintf("%s 23:59:59", $invoiceDateTo), Criteria::LESS_EQUAL);
+            $query->filterByInvoiceDate(sprintf("%s 23:59:59", $invoiceDateTo), Criteria::LESS_EQUAL);
         }
     }
 
@@ -391,6 +404,7 @@ class BackController extends ProductController
      * @param Request $request
      * @param OrderQuery $query
      * @return void
+     * @throws PropelException
      */
     protected function applySearchCustomer(Request $request, OrderQuery $query): void
     {
@@ -434,5 +448,79 @@ class BackController extends ProductController
     protected function getSearchValue(Request $request, $searchKey): string
     {
         return (string) $request->get($searchKey)['value'];
+    }
+
+    /**
+     * @Route("/delete-selected", name="delete_selected", methods={"POST"})
+     * @throws \JsonException
+     */
+    public function deleteSelectedAction(Request $request)
+    {
+        if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::DELETE)) {
+            return $response;
+        }
+
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $orderIds = $data['order_ids'];
+
+        $orders = OrderQuery::create()
+            ->filterById($orderIds, Criteria::IN)
+            ->find();
+
+        $deletedOrders = [];
+        $notDeletedOrders = [];
+        $sqlErrorMessage = null;
+
+        foreach ($orders as $order) {
+            if ($order->getStatusId() === 5) {
+                $notDeletedOrders[] = $order->getId();
+                continue;
+            }
+
+            try {
+                if ($order->getStatusId() === 1) {
+                    // Supprimer les références dans order_delay
+                    $orderDelays = OrderDelayQuery::create()
+                        ->filterByOrderId($order->getId())
+                        ->find();
+                    foreach ($orderDelays as $orderDelay) {
+                        $orderDelay->delete();
+                    }
+                }
+
+                if ($order->getStatusId() === 4) {
+                    // Supprimer les références dans credit_note
+                    $creditNotes = CreditNoteQuery::create()
+                        ->filterByOrderId($order->getId())
+                        ->find();
+                    foreach ($creditNotes as $creditNote) {
+                        $creditNote->delete();
+                    }
+                }
+
+                $order->delete();
+                $deletedOrders[] = $order->getId();
+            } catch (\Propel\Runtime\Exception\PropelException $e) {
+                if (strpos($e->getMessage(), 'SQLSTATE[23000]') !== false) {
+                    $notDeletedOrders[] = $order->getId();
+                    $sqlErrorMessage = $e->getMessage();
+                } else {
+                    throw $e;
+                }
+            }
+        }
+
+        $responseMessage = [
+            'success' => 'Selected orders deleted successfully',
+            'deleted_orders' => $deletedOrders,
+            'not_deleted_orders' => $notDeletedOrders,
+            'sql_error_message' => $sqlErrorMessage
+        ];
+
+        if (count($notDeletedOrders) > 0) {
+            $responseMessage['message'] = 'Some orders were not deleted because they are referenced by other records or have unpaid status.';
+        }
+
+        return new JsonResponse($responseMessage);
     }
 }
