@@ -438,7 +438,7 @@
 
             var orderId = $(this).data('id');
             console.log($(this).data);
-            var orderStatus = $(this).data('status'); // Assurez-vous que le statut est inclus dans les données de la ligne de commande
+            var orderStatus = $(this).data('status');
 
             if (orderStatus === 1) {
                 alert("Les commandes non payées ne peuvent pas être supprimées.");
@@ -459,7 +459,7 @@
             var selectedIds = [];
             $('.select_order:checked').each(function() {
                 var orderId = $(this).data('id');
-                var orderStatus = $(this).data('status'); // Assurez-vous que le statut est inclus dans les données de la ligne de commande
+                var orderStatus = $(this).data('status');
 
                 if (orderStatus === 1) {
                     alert("Les commandes non payées ne peuvent pas être supprimées.");
