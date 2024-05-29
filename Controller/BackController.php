@@ -1,11 +1,11 @@
 <?php
 /*************************************************************************************/
-/*      This file is part of the module EasyProductManager.                          */
+/*      This file is part of the module EasyOrderManager.                            */
 /*                                                                                   */
 /*      Copyright (c) Gilles Bourgeat                                                */
 /*      email : gilles.bourgeat@gmail.com                                            */
 /*                                                                                   */
-/*      This module is not open source                                               /*
+/*      This module is not open source                                              */
 /*      please contact gilles.bourgeat@gmail.com for a license                       */
 /*                                                                                   */
 /*                                                                                   */
@@ -18,6 +18,7 @@ use EasyOrderManager\Event\BeforeFilterEvent;
 use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
+use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -82,7 +83,8 @@ class BackController extends ProductController
 
             $query->offset($this->getOffset($request));
 
-            $orders = $query->limit(25)->find();
+            // Utilisez le paramètre length pour la pagination
+            $orders = $query->limit($this->getLength($request))->find();
 
             $json = [
                 "draw"=> $this->getDraw($request),
@@ -109,12 +111,17 @@ class BackController extends ProductController
 
                 $json['data'][] = [
                     [
+                        'order_ids' => $order->getId(),
+                    ],
+                    [
                         'id' => $order->getId(),
                         'href' => $updateUrl
                     ],
                     [
-                        'ref' => $order->getRef(),
-                        'href' => $updateUrl
+                        'ref' => [
+                            'value' => $order->getRef(),
+                            'href' => $updateUrl
+                        ]
                     ],
                     $order->getCreatedAt('d/m/y H:i:s'),
                     $order->getInvoiceDate('d/m/y H:i:s'),
@@ -225,6 +232,13 @@ class BackController extends ProductController
 
         $definitions = [
             [
+                'name' => 'checkbox',
+                'targets' => ++$i,
+                'title' =>  '<input type="checkbox" id="select-all" />',
+                'orderable' => false,
+                'searchable' => false,
+            ],
+            [
                 'name' => 'id',
                 'targets' => ++$i,
                 'orm' => OrderTableMap::COL_ID,
@@ -321,25 +335,24 @@ class BackController extends ProductController
     protected function filterByCreatedAt(Request $request, OrderQuery $query): void
     {
         if ('' !== $createdAtFrom = $request->get('filter')['createdAtFrom']) {
-            $query->filterByInvoiceDate(sprintf("%s 00:00:00", $createdAtFrom), Criteria::GREATER_EQUAL);
+            $query->filterByCreatedAt(sprintf("%s 00:00:00", $createdAtFrom), Criteria::GREATER_EQUAL);
         }
         if ('' !== $createdAtTo = $request->get('filter')['createdAtTo']) {
-            $query->filterByInvoiceDate(sprintf("%s 23:59:59", $createdAtTo), Criteria::LESS_EQUAL);
+            $query->filterByCreatedAt(sprintf("%s 23:59:59", $createdAtTo), Criteria::LESS_EQUAL);
         }
     }
 
     /**
      * @param Request $request
-     * @param OrderQuery $query
-     * @return void
+     * @param OrderQuery $query): void
      */
     protected function filterByInvoiceDate(Request $request, OrderQuery $query): void
     {
         if ('' !== $invoiceDateFrom = $request->get('filter')['invoiceDateFrom']) {
-            $query->filterByCreatedAt(sprintf("%s 00:00:00", $invoiceDateFrom), Criteria::GREATER_EQUAL);
+            $query->filterByInvoiceDate(sprintf("%s 00:00:00", $invoiceDateFrom), Criteria::GREATER_EQUAL);
         }
         if ('' !== $invoiceDateTo = $request->get('filter')['invoiceDateTo']) {
-            $query->filterByCreatedAt(sprintf("%s 23:59:59", $invoiceDateTo), Criteria::LESS_EQUAL);
+            $query->filterByInvoiceDate(sprintf("%s 23:59:59", $invoiceDateTo), Criteria::LESS_EQUAL);
         }
     }
 
@@ -364,6 +377,7 @@ class BackController extends ProductController
      * @param Request $request
      * @param OrderQuery $query
      * @return void
+     * @throws PropelException
      */
     protected function applySearchCompany(Request $request, OrderQuery $query): void
     {
@@ -391,6 +405,7 @@ class BackController extends ProductController
      * @param Request $request
      * @param OrderQuery $query
      * @return void
+     * @throws PropelException
      */
     protected function applySearchCustomer(Request $request, OrderQuery $query): void
     {
@@ -434,5 +449,71 @@ class BackController extends ProductController
     protected function getSearchValue(Request $request, $searchKey): string
     {
         return (string) $request->get($searchKey)['value'];
+    }
+
+    /**
+     * @Route("/change-status-selected", name="change_status_selected", methods={"POST"})
+     * @throws \JsonException
+     */
+    public function changeStatusSelectedAction(Request $request)
+    {
+        if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
+            return $response;
+        }
+
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $orderIds = $data['order_ids'];
+        $statusId = $data['status_id'];
+
+        $orders = OrderQuery::create()
+            ->filterById($orderIds, Criteria::IN)
+            ->find();
+
+        $updatedOrders = [];
+
+        foreach ($orders as $order) {
+            $order->setStatusId($statusId);
+            $order->save();
+            $updatedOrders[] = $order->getId();
+        }
+
+        $responseMessage = [
+            'success' => 'Selected orders status updated successfully',
+            'updated_orders' => $updatedOrders
+        ];
+
+        return new JsonResponse($responseMessage);
+    }
+
+    /**
+     * @Route("/get-status-selected", name="get_status_selected", methods={"POST"})
+     * @throws \JsonException
+     * @throws PropelException
+     */
+    public function getStatusSelectedAction(Request $request)
+    {
+        if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
+            return $response;
+        }
+
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $orderIds = $data['order_ids'];
+
+        $orders = OrderQuery::create()
+            ->filterById($orderIds, Criteria::IN)
+            ->find();
+
+        $statuses = [];
+
+        foreach ($orders as $order) {
+            $orderStatus = $order->getOrderStatus();
+            $statuses[] = [
+                'order_id' => $order->getId(),
+                'status' => $orderStatus ? $orderStatus->setLocale('fr_FR')->getTitle() : 'unknown',
+                'color' => $orderStatus ? $orderStatus->getColor() : '#000000'
+            ];
+        }
+
+        return new JsonResponse(['statuses' => $statuses]);
     }
 }

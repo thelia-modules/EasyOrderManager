@@ -5,108 +5,95 @@
 {block name="page-title"}Gestion des commandes avec EasyOrderManager{/block}
 
 {block name="after-admin-css"}
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css" rel="stylesheet" />
-    <style>
-        {literal}
-        .js-list {
-            width: 100% !important;
-        }
-        .js-animate-info-button {
-            animation: AnimateInfoButton 2s infinite;
-        }
-        @keyframes AnimateInfoButton{
-            0%{opacity: 1;}
-            50%{opacity: 0;}
-            100%{opacity: 1;}
-        }
-        {/literal}
-    </style>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css" rel="stylesheet" />
+<style>
+    {literal}
+    .js-list {
+        width: 100% !important;
+    }
+    .js-animate-info-button {
+        animation: AnimateInfoButton 2s infinite;
+    }
+    @keyframes AnimateInfoButton{
+        0%{opacity: 1;}
+        50%{opacity: 0;}
+        100%{opacity: 1;}
+    }
+    {/literal}
+</style>
 {/block}
 
 {block name="main-content"}
-    <div id="module-easy-order-manager">
+<div id="module-easy-order-manager">
 
-        <div id="wrapper" class="container">
-
-          <div class="row">
+    <div id="wrapper" class="container">
+        <div class="row">
             <div class="col-md-12 general-block-decorator">
-
-                <div class="row">
-                    <div class="col-md-4 filter">
+                <div class="row align-items-center">
+                    <div class="col-md-3 filter">
                         <div class="form-group">
                             <label for="js-input-search-order">Rechercher commande</label>
                             <input type="text" class="form-control js-refresh-table" data-default="" id="js-input-search-order" placeholder="Id ou référence">
                         </div>
                     </div>
-                    <div class="col-md-4 filter">
+                    <div class="col-md-3 filter">
                         <div class="form-group">
                             <label for="js-input-search-company">Rechercher entreprise</label>
                             <input type="text" class="form-control js-refresh-table" data-default="" id="js-input-search-company" placeholder="Nom de l'entreprise">
                         </div>
                     </div>
-                    <div class="col-md-4 filter">
+                    <div class="col-md-3 filter">
                         <div class="form-group">
                             <label for="js-input-search-customer">Rechercher client</label>
                             <input type="text" class="form-control js-refresh-table" data-default="" id="js-input-search-customer" placeholder="Nom, email ou tel du client">
                         </div>
                     </div>
+                    <div class="col-md-3 filter">
+                        <label for="js-input-length">Nombre d'éléments</label>
+                        <select id="js-input-length" class="form-control js-refresh-table">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6 filter">
+                    <div class="col-md-3 filter">
                         <div class="form-group">
-                            <label for="js-input-status" class="control-label">
-                                Etat :
-                            </label>
-
+                            <label for="js-input-status" class="control-label">Etat :</label>
                             <select id="js-input-status" class="form-control js-refresh-table" data-default="">
-                                <option value="">Aucun etat filtré</option>
-
+                                <option value="">Aucun état filtré</option>
                                 {loop type='order-status' name='order-status'}
-                                <option value="{$ID}" >{$TITLE}</option>
+                                <option value="{$ID}">{$TITLE}</option>
                                 {/loop}
-
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-6 filter">
+                    <div class="col-md-3 filter">
                         <div class="form-group">
-                            <label for="js-input-payment-module" class="control-label">
-                                Moyen de paiement :
-                            </label>
-
+                            <label for="js-input-payment-module" class="control-label">Moyen de paiement :</label>
                             <select id="js-input-payment-module" class="form-control js-refresh-table" data-default="">
                                 <option value="">Aucun moyen de paiement filtré</option>
-
                                 {loop type='module' name='payment-modules' module_type=3}
-                                <option value="{$ID}" >{$TITLE}</option>
+                                <option value="{$ID}">{$TITLE}</option>
                                 {/loop}
-
                             </select>
                         </div>
                     </div>
-
-                </div>
-                <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label class="control-label" for="js-input-created-at-from">
-                                Création : À partir du
-                            </label>
-
+                            <label class="control-label" for="js-input-created-at-from">Création : À partir du</label>
                             <div class="input-group">
                                 <input type="date" id="js-input-created-at-from" class="form-control js-refresh-table" />
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label class="control-label" for="js-input-created-at-to">
-                                Jusqu'au
-                            </label>
-
+                            <label class="control-label" for="js-input-created-at-to">Jusqu'au</label>
                             <div class="input-group">
                                 <input type="date" id="js-input-created-at-to" class="form-control js-refresh-table" value="" />
                             </div>
@@ -114,26 +101,24 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label class="control-label" for="js-input-invoice-date-from">
-                                Facturation : À partir du
-                            </label>
-
+                            <label class="control-label" for="js-input-invoice-date-from">Facturation : À partir du</label>
                             <div class="input-group">
                                 <input type="date" id="js-input-invoice-date-from" class="form-control js-refresh-table" />
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label class="control-label" for="js-input-invoice-date-to">
-                                Jusqu'au
-                            </label>
-
+                            <label class="control-label" for="js-input-invoice-date-to">Jusqu'au</label>
                             <div class="input-group">
                                 <input type="date" id="js-input-invoice-date-to" class="form-control js-refresh-table" value="" />
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-2">
+                        <button id="change-status-selected-items" class="btn btn-danger">Changer le statut des commandes sélectionnées</button>
                     </div>
                 </div>
                 <div class="row">
@@ -148,7 +133,7 @@
                             <tr>
                                 {foreach from=$columnsDefinition item=definition}
                                 <td>
-                                    {$definition.title}
+                                    {$definition.title|unescape}
                                 </td>
                                 {/foreach}
                             </tr>
@@ -158,109 +143,127 @@
                         </table>
                     </div>
                 </div>
-
             </div>
-          </div>
-
         </div>
+    </div>
 
-        <!-- Modal Info -->
-        <div class="modal fade" id="modal-info" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Informations module</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <iframe width="100%" frameborder="0" height="300" src="https://www.gilles-bourgeat.fr/thelia/module/easy-product-manager?tv={$theliaVersion}&mv={$moduleVersion}&mn={$moduleName}&lang={$app->request->getSession()->getLang()->getLocale()}">
-
-                        </iframe>
-                    </div>
+    <!-- Modal Info -->
+    <div class="modal fade" id="modal-info" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Informations module</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <iframe width="100%" frameborder="0" height="300" src="https://www.gilles-bourgeat.fr/thelia/module/easy-product-manager?tv={$theliaVersion}&mv={$moduleVersion}&mn={$moduleName}&lang={$app->request->getSession()->getLang()->getLocale()}">
+                    </iframe>
                 </div>
             </div>
         </div>
-
-    {* Cancel order confirmation dialog *}
-
-    {capture "cancel_order_dialog"}
-    <input type="hidden" name="order_page" value="{$order_page|default:null}">
-    <input type="hidden" name="status" value="{$view_status|default:null}">
-
-    <input type="hidden" name="order_id" id="cancel_order_id" value="" />
-    <input type="hidden" name="status_id" value="5" />
-    {/capture}
-
-    {include
-    file = "includes/generic-confirm-dialog.html"
-
-    dialog_id       = "cancel_order_dialog"
-    dialog_title    = {intl l="Delete an order"}
-    dialog_message  = {intl l="Do you really want to cancel this order ?"}
-
-    form_action         = {token_url path='/admin/order/update/status'}
-    form_content        = {$smarty.capture.cancel_order_dialog nofilter}
-    form_id             = "cancel-order-form"
-    }
-
     </div>
+
+    <!-- Modal Change Status Selected Orders -->
+    <div class="modal fade" id="modal-change-status" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Changer le statut des commandes sélectionnées</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="change-status-select">Nouveau statut :</label>
+                        <select id="change-status-select" class="form-control">
+                            {loop type='order-status' name='order-status'}
+                            <option value="{$ID}">{$TITLE}</option>
+                            {/loop}
+                        </select>
+                    </div>
+                    <div id="current-status-list" class="form-group">
+                        <label>Statut actuel des commandes sélectionnées :</label>
+                        <ul id="current-status-list-content" class="list-group"></ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="confirm-change-status">Changer le statut</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Delete Order Confirmation -->
+    <div class="modal fade" id="cancel_order_dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{intl l="Delete an order"}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>{intl l="Do you really want to cancel this order ?"}</p>
+                    <form id="cancel-order-form" action="{token_url path='/admin/order/update/status'}" method="post">
+                        <input type="hidden" name="order_id" id="cancel_order_id" value="" />
+                        <input type="hidden" name="status_id" value="5" />
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" form="cancel-order-form" class="btn btn-danger">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 {/block}
 
 {block name="javascript-last-call"}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
-    {*<script src="https://cdnjs.cloudflare.com/ajax/libs/history.js/1.8/bundled/html4+html5/jquery.history.min.jss"></script>*}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+{*<script src="https://cdnjs.cloudflare.com/ajax/libs/history.js/1.8/bundled/html4+html5/jquery.history.min.jss"></script>*}
+<script>
+    "use strict";
+    (function($, $module){
+        {* Ajout btn module info *}
+        $('#page-wrapper .page-header').append('<button class="btn btn-info js-module-easy-order-manager-info pull-right"><i class="glyphicon glyphicon-info-sign"></i></button>');
 
-    <script>
-        "use strict";
-        (function($, $module){
-            {* Ajout btn module info *}
-            $('#page-wrapper .page-header').append('<button class="btn btn-info js-module-easy-order-manager-info pull-right"><i class="glyphicon glyphicon-info-sign"></i></button>');
+        $( "#js-input-feature" ).select2({ placeholder: 'Filtrer par caractéristique' });
+        $( "#js-input-attribute" ).select2({ placeholder: 'Filtrer par attribut' });
+        $( "#js-input-category" ).select2();
+        $( "#js-input-brand" ).select2();
+        var currencySymbol = '{$currencySymbol|default:null}';
 
-            //$.fn.select2.defaults.set( "theme", "bootstrap" );
+        var tv = '{$theliaVersion}',
+            mv = '{$moduleVersion}',
+            mn = '{$moduleName}',
+            id = $module.attr('id'),
+            popoverPosition = null,
+            $modalChangeStatus = $module.find('#modal-change-status'),
+            $modalDelete = $module.find('#cancel_order_dialog');
 
-            $( "#js-input-feature" ).select2( {
-                placeholder: 'Filter par caractéristique'
-            } );
-
-            $( "#js-input-attribute" ).select2( {
-                placeholder: 'Filtrer par attribut'
-            } );
-
-            $( "#js-input-category" ).select2();
-
-            $( "#js-input-brand" ).select2();
-
-            var currencySymbol = '{$currencySymbol|default:null}';
-
-            var tv = '{$theliaVersion}',
-                mv = '{$moduleVersion}',
-                mn = '{$moduleName}',
-                id = $module.attr('id'),
-                popoverPosition = null,
-                $modalDelete = $module.find('#cancel_order_dialog');
-
-
-            var table = $module.find('.js-list').DataTable( {
+        var table = $module.find('.js-list').DataTable({
                 processing: true,
                 serverSide: true,
                 searching: false,
                 lengthChange: false,
                 scrollX: true,
-                order: [[ 0, "desc" ]],
-                drawCallback:function (oSettings) {
-                    // console.log(oSettings);
-                },
+                order: [[1, "desc"]],
+                drawCallback: function(oSettings) {},
                 ajax: {
-                    ajax: "{url current=true}",
+                    url: "{url current=true}",
                     method: 'POST',
-                    data: function (data) {
+                    data: function(data) {
                         resetPopoverPosition();
-
                         data.filter = {
                             status: $module.find('#js-input-status').val(),
                             paymentModuleId: $module.find('#js-input-payment-module').val(),
@@ -272,392 +275,451 @@
                             searchCompany: $module.find('#js-input-search-company').val(),
                             searchCustomer: $module.find('#js-input-search-customer').val(),
                         };
-
                         [...document.querySelectorAll(".js-filter-element")].forEach(el => {
-                            data.filter[el.name] = el.value
+                            data.filter[el.name] = el.value;
                         });
-
                         data.searchOrder = {
                             "value": $module.find('#js-input-search-order').val(),
                             regex: false
                         };
-
                         data.searchCompany = {
                             "value": $module.find('#js-input-search-company').val(),
                             regex: false
                         };
-
                         data.searchCustomer = {
                             "value": $module.find('#js-input-search-customer').val(),
                             regex: false
                         };
-
                         data.length = $module.find('#js-input-length').val();
                     }
                 },
                 displayLength: 25,
                 columnDefs: {$columnsDefinition|@json_encode nofilter}.concat([
-                    {
-                        className: "text-center",
-                        targets: [2,3,4,6],
-                        render: function ( data, type, row, meta ) {
-                            return data;
+                {
+                    className: "text-center",
+                    targets: 0,
+                    render: function(data, type, row, meta) {
+                        if (data && data.order_ids !== undefined) {
+                            return '<input type="checkbox" class="select_order" data-id="' + data.order_ids + '">';
                         }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 5,
-                        render: function ( data, type, row, meta ) {
-                            if (data !== '') {
-                                return '<a href="' + data['href'] + '">' + data['name'] + '</a>'
-                            }
-
-                            return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                        }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 0,
-                        render: function ( data, type, row, meta ) {
-                            if (data !== '') {
-                                return '<a href="' + data['href'] + '">' + data['id'] + '</a>'
-                            }
-
-                            return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                        }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 1,
-                        render: function ( data, type, row, meta ) {
-                            if (data !== '') {
-                                return '<a href="' + data['href'] + '">' + data['ref'] + '</a>'
-                            }
-
-                            return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                        }
-                    },
-                    {
-                        className: "text-center",
-                        targets: 7,
-                        render: function ( data, type, row, meta ) {
-                            return '<span class="label" style="background-color: ' + data['color'] + ';">' + data['name'] + '</span>';
-                        }
-                    },
-                    {
-                        className: "text-right",
-                        targets: 8,
-                        render: function ( data, type, row, meta ) {
-                            var html = '<a href="' + data['hrefPrint'] + '" class="btn btn-default" title="Imprimer">' +
-                                '<i class="glyphicon glyphicon-print"></i>' +
-                                '</a>' +
-                                '<a href="' + data['hrefUpdate'] + '" class="btn btn-info" title="Modifier">' +
-                                '<i class="glyphicon glyphicon-edit"></i>' +
-                                '</a>';
-                            if (!data['isCancelled']) {
-                                html += ' <a href="#" class="btn btn-danger js-action-delete" title="Supprimer" data-id="' + data['order_id'] + '">' +
-                                    '<i class="glyphicon glyphicon-trash"></i>' +
-                                    '</a>';
-                            }
-                            return html;
-                        }
+                        return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
                     }
-            ]),
-                language: {
-                "sProcessing":     "Traitement en cours...",
-                    "sSearch":         "Rechercher&nbsp;:",
-                    "sLengthMenu":     "Afficher _MENU_ &eacute;l&eacute;ments",
-                    "sInfo":           "Affichage de l'&eacute;l&eacute;ment _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
-                    "sInfoEmpty":      "Affichage de l'&eacute;l&eacute;ment 0 &agrave; 0 sur 0 &eacute;l&eacute;ment",
-                    "sInfoFiltered":   "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
-                    "sInfoPostFix":    "",
-                    "sLoadingRecords": "Chargement en cours...",
-                    "sZeroRecords":    "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable":     "Aucune donn&eacute;e disponible dans le tableau",
-                    "oPaginate": {
-                    "sFirst":      "Premier",
-                        "sPrevious":   "Pr&eacute;c&eacute;dent",
-                        "sNext":       "Suivant",
-                        "sLast":       "Dernier"
                 },
-                "oAria": {
-                    "sSortAscending":  ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre d&eacute;croissant"
+                {
+                    className: "text-center",
+                    targets: 1,
+                    render: function(data, type, row, meta) {
+                        if (data && data.id !== undefined) {
+                            return '<a href="' + (data.href || '#') + '">' + data.id + '</a>';
+                        }
+                        return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 2,
+                    render: function(data, type, row, meta) {
+                        return '<a href="' + (data["ref"]["href"] || '#') + '">' + data["ref"]["value"] + '</a>';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: [3, 4],
+                    render: function(data, type, row, meta) {
+                        return data !== null ? data : '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 5,
+                    render: function(data, type, row, meta) {
+                        return data !== null ? data : '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 6,
+                    render: function(data, type, row, meta) {
+                        if (data && data.name !== undefined) {
+                            return '<a href="' + (data.href || '#') + '">' + data.name + '</a>';
+                        }
+                        return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 7,
+                    render: function(data, type, row, meta) {
+                        return data !== null ? data : '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Inconnu</a>';
+                    }
+                },
+                {
+                    className: "text-center",
+                    targets: 8,
+                    render: function(data, type, row, meta) {
+                        return '<span class="label" style="background-color: ' + (data.color || '#ccc') + ';">' + (data.name || 'Inconnu') + '</span>';
+                    }
+                },
+                {
+                    className: "text-right",
+                    targets: 9,
+                    render: function(data, type, row, meta) {
+                        var html = '<a href="' + (data.hrefPrint || '#') + '" class="btn btn-default" title="Imprimer">' +
+                            '<i class="glyphicon glyphicon-print"></i>' +
+                            '</a>' +
+                            '<a href="' + (data.hrefUpdate || '#') + '" class="btn btn-info" title="Modifier">' +
+                            '<i class="glyphicon glyphicon-edit"></i>' +
+                            '</a>';
+                        if (!data.isCancelled) {
+                            html += ' <a href="#" class="btn btn-danger js-action-delete" title="Supprimer" data-id="' + (data.order_id || '') + '">' +
+                                '<i class="glyphicon glyphicon-trash"></i>' +
+                                '</a>';
+                        }
+                        return html;
+                    }
                 }
+            ]),
+            language: {
+            "sProcessing": "Traitement en cours...",
+                "sSearch": "Rechercher&nbsp;:",
+                "sLengthMenu": "Afficher _MENU_ éléments",
+                "sInfo": "Affichage de l'élément _START_ à _END_ sur _TOTAL_ éléments",
+                "sInfoEmpty": "Affichage de l'élément 0 à 0 sur 0 élément",
+                "sInfoFiltered": "(filtré de _MAX_ éléments au total)",
+                "sInfoPostFix": "",
+                "sLoadingRecords": "Chargement en cours...",
+                "sZeroRecords": "Aucun élément à afficher",
+                "sEmptyTable": "Aucune donnée disponible dans le tableau",
+                "oPaginate": {
+                "sFirst": "Premier",
+                    "sPrevious": "Précédent",
+                    "sNext": "Suivant",
+                    "sLast": "Dernier"
+            },
+            "oAria": {
+                "sSortAscending": ": activer pour trier la colonne par ordre croissant",
+                    "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
             }
+        }
+    });
+
+        function resetPopoverPosition() {
+            if (popoverPosition !== null) {
+                popoverPosition.popover('destroy');
+            }
+        }
+
+        var $modal = $module.find('#modal-edit-order');
+        var $modalLoader = $modal.find('.js-loader');
+        var $modalContent = $modal.find('.js-content');
+        var $modalError = $modal.find('.js-error');
+        var $modalSuccess = $modal.find('.js-success');
+
+        var filters = $module.find('.js-refresh-table');
+        function refreshFilter() {
+            filters.each(function() {
+                if ('undefined' !== typeof this.dataset.default) {
+                    var val = $(this).val();
+                    if (val === null) {
+                        val = '';
+                    }
+                    if (val !== this.dataset.default) {
+                        $(this).parents('.filter:eq(0)').css('backgroundColor', 'rgba(0, 102, 255, 0.1)');
+                    } else {
+                        $(this).parents('.filter:eq(0)').css('backgroundColor', '');
+                    }
+                }
             });
+        }
 
-            function resetPopoverPosition() {
-                if (popoverPosition !== null) {
-                    popoverPosition.popover('destroy');
+        var timer = null;
+        $module.find('.js-refresh-table').on('change keyup', function(event) {
+            if (event.type === "keyup") {
+                if (timer !== null) {
+                    clearTimeout(timer);
                 }
-            }
-
-            var $modal = $module.find('#modal-edit-order');
-            var $modalLoader = $modal.find('.js-loader');
-            var $modalContent = $modal.find('.js-content');
-            var $modalError = $modal.find('.js-error');
-            var $modalSuccess = $modal.find('.js-success');
-
-            var filters = $module.find('.js-refresh-table');
-            function refreshFilter()
-            {
-                filters.each(function(){
-                    if ('undefined' !== typeof this.dataset.default) {
-                        var val = $(this).val();
-                        {* gestion cas select multiple *}
-                        if (val === null) {
-                            val = '';
-                        }
-
-                        if (val !== this.dataset.default) {
-                            $(this).parents('.filter:eq(0)').css('backgroundColor', 'rgba(0, 102, 255, 0.1)');
-                        } else {
-                            $(this).parents('.filter:eq(0)').css('backgroundColor', '');
-                        }
-                    }
-                });
-            }
-
-
-            {* ajout timer pour éviter le spam ajax *}
-            var timer = null;
-            $module.find('.js-refresh-table').on('change keyup', function(event){
-                if (event.type === "keyup" ) {
-                    if (timer !== null) {
-                        clearTimeout(timer);
-                    }
-
-                    timer = setTimeout(function(){
-                        refreshFilter();
-                        table.ajax.reload();
-                    }, 350)
-                } else {
+                timer = setTimeout(function() {
                     refreshFilter();
                     table.ajax.reload();
-                }
-            });
-
-            table.on('click', '.js-edit-price, .js-edit-quantity', function(event){
-               event.preventDefault();
-
-                $modalContent.hide();
-                $modalError.hide();
-                $modalSuccess.hide();
-                $modalLoader.show();
-
-               var id = $(this).parents('tr').find('td:first').text();
-
-               $.ajax({
-                   url: '{url current=true}/' + id,
-                   success: function(data) {
-                       $modalContent.html(data);
-
-                       $modalLoader.hide();
-                       $modalContent.show();
-                   },
-                   error: function() {
-                       $modalError.show();
-                   }
-               });
-
-                $modal.modal('show');
-            });
-
-            $modal.on('submit', 'form', function(event){
-                event.preventDefault();
-
-                $modalContent.hide();
-                $modalLoader.show();
-
-                $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'post',
-                    data: $(this).serialize(),
-                    success: function() {
-                        table.ajax.reload(null, false);
-                        $modalSuccess.show();
-                        $modalLoader.hide();
-
-                        setTimeout(function () {
-                            $modal.modal('hide');
-                        }, 200);
-                    },
-                    error: function() {
-                        $modalError.show();
-                        $modalLoader.hide();
-                    }
-                });
-            });
-
-            $modal.on('click', '.page-close-button', function(event){
-                event.preventDefault();
-                $modal.modal('hide');
-            });
-
-            table.on('change', '.js-action-visible', function(){
-                $.ajax({
-                    url : "{url path='admin/products/toggle-online'}",
-                    data : {
-                        product_id : $(this).parents('tr').find('td:first').text(),
-                        action : 'visibilityToggle'
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position-up', function(event){
-                event.preventDefault();
-                $.ajax({
-                    url: "{url path="/admin/orders/update-position"}",
-                    method: 'get',
-                    data: {
-                        mode: "up",
-                        category_id: $module.find('#js-input-category').val(),
-                        order_id: $(this).parents('tr').find('td:first').text()
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position-down', function(event){
-                event.preventDefault();
-                $.ajax({
-                    url: "{url path="/admin/orders/update-position"}",
-                    method: 'get',
-                    data: {
-                        mode: "down",
-                        order_id: $(this).parents('tr').find('td:first').text()
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position', function(event){
-                event.preventDefault();
-
-                resetPopoverPosition();
-
-                var currentPosition = $(this).text();
-
-                popoverPosition = $(this)
-                    .popover({
-                        html : true,
-                        placement: 'auto',
-                        title: function() {
-                            return 'Changer la position';
-                        },
-                        content: function() {
-                            return '<form class="form-inline js-form-position" data-product-id="' + $(this).parents('tr').find('td:first').text() + '">' +
-                                '  <div class="form-group">' +
-                                '    <div class="input-group">' +
-                                '      <input style="width: 70px;" type="number" class="form-control" min="0" value="' + currentPosition + '">' +
-                                '    </div>\n' +
-                                '  </div>\n' +
-                                '  <button type="submit" class="btn btn-primary">' +
-                                '<i class="glyphicon glyphicon-ok"></i>' +
-                                '</button>' +
-                                '<button type="button" class="btn btn-default btn-sm js-action-position-close"><i class="glyphicon glyphicon-remove"></i></button>' +
-                                '</form>';
-                        }
-                    }).popover('show');
-            });
-
-            table.on('submit', '.js-form-position', function(event){
-                event.preventDefault();
-                $.ajax({
-                    url: "{url path="/admin/orders/update-position"}",
-                    method: 'get',
-                    data: {
-                        position: $(this).find('input').val(),
-                        order_id: this.dataset.orderId
-                    }
-                });
-
-                table.ajax.reload(null, false);
-            });
-
-            table.on('click', '.js-action-position-close', function(event){
-                event.preventDefault();
-                resetPopoverPosition();
-            });
-
-            {* auto refresh *}
-            var interval = null;
-            function autoRefresh()
-            {
-                var ms = parseInt($module.find('#js-input-auto-refresh-interval').val()) * 1000;
-
-                interval = setTimeout(function(){
-                    table.ajax.reload(null, false);
-                    autoRefresh();
-                }, ms)
+                }, 350);
+            } else {
+                refreshFilter();
+                table.ajax.reload();
             }
+        });
 
-            $module.find('#js-input-auto-refresh').on('change', function(event){
-                if (parseInt($(this).val())) {
-                    autoRefresh();
-                    document.getElementById('js-input-auto-refresh-interval').parentNode.parentNode.parentNode.style.backgroundColor = 'rgba(0, 102, 255, 0.1)';
-                    this.parentNode.parentNode.style.backgroundColor = 'rgba(0, 102, 255, 0.1)';
-                } else {
-                    clearInterval(interval);
-                    interval = null;
-                    document.getElementById('js-input-auto-refresh-interval').parentNode.parentNode.parentNode.style.backgroundColor = '';
-                    this.parentNode.parentNode.style.backgroundColor = '';
+        table.on('click', '.js-edit-price, .js-edit-quantity', function(event){
+            event.preventDefault();
+            $modalContent.hide();
+            $modalError.hide();
+            $modalSuccess.hide();
+            $modalLoader.show();
+            var id = $(this).parents('tr').find('td:first').text();
+            $.ajax({
+                url: '{url current=true}/' + id,
+                success: function(data) {
+                    $modalContent.html(data);
+                    $modalLoader.hide();
+                    $modalContent.show();
+                },
+                error: function() {
+                    $modalError.show();
                 }
             });
-            {* end auto refresh *}
+            $modal.modal('show');
+        });
 
-            table.on('click', '.js-action-delete', function(e){
-                e.preventDefault();
-
-                // Set proper order ID in delete form
-                $modalDelete.find('#cancel_order_id').val($(this).data('id'));
-
-                $modalDelete.modal('show');
+        $modal.on('submit', 'form', function(event){
+            event.preventDefault();
+            $modalContent.hide();
+            $modalLoader.show();
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'post',
+                data: $(this).serialize(),
+                success: function() {
+                    table.ajax.reload(null, false);
+                    $modalSuccess.show();
+                    $modalLoader.hide();
+                    setTimeout(function() {
+                        $modal.modal('hide');
+                    }, 200);
+                },
+                error: function() {
+                    $modalError.show();
+                    $modalLoader.hide();
+                }
             });
+        });
 
-            $modalDelete.on('submit', 'form', function(e){
-                e.preventDefault();
+        $modal.on('click', '.page-close-button', function(event){
+            event.preventDefault();
+            $modal.modal('hide');
+        });
 
+        table.on('change', '.js-action-visible', function(){
+            $.ajax({
+                url : "{url path='admin/products/toggle-online'}",
+                data : {
+                    product_id : $(this).parents('tr').find('td:first').text(),
+                    action : 'visibilityToggle'
+                }
+            });
+            table.ajax.reload(null, false);
+        });
+
+        table.on('click', '.js-action-position-up', function(event){
+            event.preventDefault();
+            $.ajax({
+                url: "{url path="/admin/orders/update-position"}",
+                method: 'get',
+                data: {
+                    mode: "up",
+                    category_id: $module.find('#js-input-category').val(),
+                    order_id: $(this).parents('tr').find('td:first').text()
+                }
+            });
+            table.ajax.reload(null, false);
+        });
+
+        table.on('click', '.js-action-position-down', function(event){
+            event.preventDefault();
+            $.ajax({
+                url: "{url path="/admin/orders/update-position"}",
+                method: 'get',
+                data: {
+                    mode: "down",
+                    order_id: $(this).parents('tr').find('td:first').text()
+                }
+            });
+            table.ajax.reload(null, false);
+        });
+
+        table.on('click', '.js-action-delete', function(e) {
+            e.preventDefault();
+            $modalDelete.find('#cancel_order_id').val($(this).data('id'));
+            $modalDelete.modal('show');
+        });
+
+        $modalDelete.on('submit', 'form', function(e){
+            e.preventDefault();
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'post',
+                data: $(this).serialize(),
+                success: function() {
+                    table.ajax.reload(null, false);
+                    setTimeout(function () {
+                        $modalDelete.modal('hide');
+                    }, 200);
+                },
+                error: function() {
+                    // Gestion des erreurs
+                }
+            });
+        });
+
+        $modalChangeStatus.on('submit', 'form', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'post',
+                data: $(this).serialize(),
+                success: function() {
+                    table.ajax.reload(null, false);
+                    setTimeout(function() {
+                        $modalChangeStatus.modal('hide');
+                    }, 200);
+                },
+                error: function() {
+                    // Gestion des erreurs
+                }
+            });
+        });
+
+        $('#select-all').on('click', function() {
+            var rows = $('.js-list').DataTable().rows({ 'search': 'applied' }).nodes();
+            $('input[type="checkbox"]', rows).prop('checked', this.checked);
+        });
+
+        $('#change-status-selected-items').on('click', function () {
+            var selectedIds = [];
+            $('.select_order:checked').each(function () {
+                selectedIds.push($(this).data('id'));
+            });
+            if (selectedIds.length > 0) {
                 $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'post',
-                    data: $(this).serialize(),
-                    success: function() {
-                        table.ajax.reload(null, false);
-
-                        setTimeout(function () {
-                            $modalDelete.modal('hide');
-                        }, 200);
+                    url: "{url path='/admin/easy-order-manager/get-status-selected'}",
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ order_ids: selectedIds }),
+                    success: function (response) {
+                        var statusList = response.statuses;
+                        var listContent = '';
+                        for (var i = statusList.length - 1; i >= 0; i--) {
+                            listContent += '<li class="list-group-item">' +
+                                'Commande ' + statusList[i].order_id + ': ' +
+                                '<span class="badge" style="background-color:' + statusList[i].color + ';">' + statusList[i].status + '</span>' +
+                                '</li>';
+                        }
+                        $('#current-status-list-content').html(listContent);
+                        $('#modal-change-status').modal('show');
                     },
-                    error: function() {
-
+                    error: function (xhr, status, error) {
+                        alert('Une erreur est survenue : ' + error);
                     }
                 });
+            } else {
+                alert('Aucune commande sélectionnée.');
+            }
+        });
+
+        $('#confirm-change-status').on('click', function() {
+            var selectedIds = [];
+            $('.select_order:checked').each(function() {
+                selectedIds.push($(this).data('id'));
             });
+            var newStatus = $('#change-status-select').val();
+            if (selectedIds.length > 0) {
+                $.ajax({
+                    url: "{url path='/admin/easy-order-manager/change-status-selected'}",
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ order_ids: selectedIds, status_id: newStatus }),
+                    success: function(response) {
+                        table.ajax.reload(null, false);
+                        $('#select-all').prop('checked', false);
+                        $('#modal-change-status').modal('hide');
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Une erreur est survenue : ' + error);
+                    }
+                });
+            } else {
+                alert('Aucune commande sélectionnée.');
+            }
+        });
 
-           /* $module.find('select.js-select2').select2({
-                language: "fr"
-            });*/
+        table.on('click', '.js-action-position', function(event){
+            event.preventDefault();
+            resetPopoverPosition();
+            var currentPosition = $(this).text();
+            popoverPosition = $(this)
+                .popover({
+                    html : true,
+                    placement: 'auto',
+                    title: function() {
+                        return 'Changer la position';
+                    },
+                    content: function() {
+                        return '<form class="form-inline js-form-position" data-product-id="' + $(this).parents('tr').find('td:first').text() + '">' +
+                            '  <div class="form-group">' +
+                            '    <div class="input-group">' +
+                            '      <input style="width: 70px;" type="number" class="form-control" min="0" value="' + currentPosition + '">' +
+                            '    </div>\n' +
+                            '  </div>\n' +
+                            '  <button type="submit" class="btn btn-primary">' +
+                            '<i class="glyphicon glyphicon-ok"></i>' +
+                            '</button>' +
+                            '<button type="button" class="btn btn-default btn-sm js-action-position-close"><i class="glyphicon glyphicon-remove"></i></button>' +
+                            '</form>';
+                    }
+                }).popover('show');
+        });
 
-           {* Modale information module *}
-           $('.js-module-easy-order-manager-info').on('click', function(){
-               $module.find('#modal-info').modal('show');
-               $(this).removeClass('js-animate-info-button');
-           });
-
-            window.addEventListener("message", function(event){
-                if (event.origin === "https://www.gilles-bourgeat.fr" && event.data === 'new') {
-                    $(document).ready(function(){
-                        $('.js-module-easy-order-manager-info').addClass('js-animate-info-button');
-                    });
+        table.on('submit', '.js-form-position', function(event){
+            event.preventDefault();
+            $.ajax({
+                url: "{url path="/admin/orders/update-position"}",
+                method: 'get',
+                data: {
+                    position: $(this).find('input').val(),
+                    order_id: this.dataset.orderId
                 }
-            }, false);
+            });
+            table.ajax.reload(null, false);
+        });
 
-        }(jQuery, jQuery('#module-easy-order-manager')))
-    </script>
+        table.on('click', '.js-action-position-close', function(event){
+            event.preventDefault();
+            resetPopoverPosition();
+        });
+
+        var interval = null;
+        function autoRefresh() {
+            var ms = parseInt($module.find('#js-input-auto-refresh-interval').val()) * 1000;
+            interval = setTimeout(function(){
+                table.ajax.reload(null, false);
+                autoRefresh();
+            }, ms);
+        }
+
+        $module.find('#js-input-auto-refresh').on('change', function(event){
+            if (parseInt($(this).val())) {
+                autoRefresh();
+                document.getElementById('js-input-auto-refresh-interval').parentNode.parentNode.parentNode.style.backgroundColor = 'rgba(0, 102, 255, 0.1)';
+                this.parentNode.parentNode.style.backgroundColor = 'rgba(0, 102, 255, 0.1)';
+            } else {
+                clearInterval(interval);
+                interval = null;
+                document.getElementById('js-input-auto-refresh-interval').parentNode.parentNode.parentNode.style.backgroundColor = '';
+                this.parentNode.parentNode.style.backgroundColor = '';
+            }
+        });
+
+        $('.js-module-easy-order-manager-info').on('click', function(){
+            $module.find('#modal-info').modal('show');
+            $(this).removeClass('js-animate-info-button');
+        });
+
+        window.addEventListener("message", function(event){
+            if (event.origin === "https://www.gilles-bourgeat.fr" && event.data === 'new') {
+                $(document).ready(function(){
+                    $('.js-module-easy-order-manager-info').addClass('js-animate-info-button');
+                });
+            }
+        }, false);
+
+    }(jQuery, jQuery('#module-easy-order-manager')))
+</script>
 {/block}
