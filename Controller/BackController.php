@@ -109,15 +109,11 @@ class BackController extends ProductController
             /** @var Order $order */
             foreach ($orders as $order) {
                 // for each defineColumnsDefinition
-                foreach ($orders as $order) {
-                    // for each defineColumnsDefinition
-
-                    $orderDatas = [];
-                    foreach ($columnDefinitions as $definition){
-                        $orderDatas[] = $definition['parseOrderData']($order);
-                    }
-                    $json['data'][]=$orderDatas;
+                $orderDatas = [];
+                foreach ($columnDefinitions as $definition){
+                    $orderDatas[] = $definition['parseOrderData']($order);
                 }
+                $json['data'][]=$orderDatas;
             }
 
             return new JsonResponse($json);
