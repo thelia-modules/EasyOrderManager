@@ -231,6 +231,8 @@
 <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
 {*<script src="https://cdnjs.cloudflare.com/ajax/libs/history.js/1.8/bundled/html4+html5/jquery.history.min.jss"></script>*}
+{include file="assets/js/order-render.js.html"}
+
 <script>
     "use strict";
     (function($, $module){
@@ -294,114 +296,35 @@
                     }
                 },
                 displayLength: 25,
-                columnDefs: {$columnsDefinition|@json_encode nofilter}.concat([
-                {
-                    className: "text-center",
-                    targets: 0,
-                    render: function(data, type, row, meta) {
-                        if (data && data.order_ids !== undefined) {
-                            return '<input type="checkbox" class="select_order" data-id="' + data.order_ids + '">';
-                        }
-                        return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
+                columnDefs: {$columnsDefinition|@json_encode nofilter}.map(
+                    function (columnDefinition){
+                        columnDefinition.render = columnDefinition.render ? eval(columnDefinition.render): defaultRender
+                        return columnDefinition
                     }
+                ),
+                language: {
+                "sProcessing": "Traitement en cours...",
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sLengthMenu": "Afficher _MENU_ éléments",
+                    "sInfo": "Affichage de l'élément _START_ à _END_ sur _TOTAL_ éléments",
+                    "sInfoEmpty": "Affichage de l'élément 0 à 0 sur 0 élément",
+                    "sInfoFiltered": "(filtré de _MAX_ éléments au total)",
+                    "sInfoPostFix": "",
+                    "sLoadingRecords": "Chargement en cours...",
+                    "sZeroRecords": "Aucun élément à afficher",
+                    "sEmptyTable": "Aucune donnée disponible dans le tableau",
+                    "oPaginate": {
+                    "sFirst": "Premier",
+                        "sPrevious": "Précédent",
+                        "sNext": "Suivant",
+                        "sLast": "Dernier"
                 },
-                {
-                    className: "text-center",
-                    targets: 1,
-                    render: function(data, type, row, meta) {
-                        if (data && data.id !== undefined) {
-                            return '<a href="' + (data.href || '#') + '">' + data.id + '</a>';
-                        }
-                        return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                    }
-                },
-                {
-                    className: "text-center",
-                    targets: 2,
-                    render: function(data, type, row, meta) {
-                        return '<a href="' + (data["ref"]["href"] || '#') + '">' + data["ref"]["value"] + '</a>';
-                    }
-                },
-                {
-                    className: "text-center",
-                    targets: [3, 4],
-                    render: function(data, type, row, meta) {
-                        return data !== null ? data : '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                    }
-                },
-                {
-                    className: "text-center",
-                    targets: 5,
-                    render: function(data, type, row, meta) {
-                        return data !== null ? data : '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                    }
-                },
-                {
-                    className: "text-center",
-                    targets: 6,
-                    render: function(data, type, row, meta) {
-                        if (data && data.name !== undefined) {
-                            return '<a href="' + (data.href || '#') + '">' + data.name + '</a>';
-                        }
-                        return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
-                    }
-                },
-                {
-                    className: "text-center",
-                    targets: 7,
-                    render: function(data, type, row, meta) {
-                        return data !== null ? data : '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Inconnu</a>';
-                    }
-                },
-                {
-                    className: "text-center",
-                    targets: 8,
-                    render: function(data, type, row, meta) {
-                        return '<span class="label" style="background-color: ' + (data.color || '#ccc') + ';">' + (data.name || 'Inconnu') + '</span>';
-                    }
-                },
-                {
-                    className: "text-right",
-                    targets: 9,
-                    render: function(data, type, row, meta) {
-                        var html = '<a href="' + (data.hrefPrint || '#') + '" class="btn btn-default" title="Imprimer">' +
-                            '<i class="glyphicon glyphicon-print"></i>' +
-                            '</a>' +
-                            '<a href="' + (data.hrefUpdate || '#') + '" class="btn btn-info" title="Modifier">' +
-                            '<i class="glyphicon glyphicon-edit"></i>' +
-                            '</a>';
-                        if (!data.isCancelled) {
-                            html += ' <a href="#" class="btn btn-danger js-action-delete" title="Supprimer" data-id="' + (data.order_id || '') + '">' +
-                                '<i class="glyphicon glyphicon-trash"></i>' +
-                                '</a>';
-                        }
-                        return html;
-                    }
+                "oAria": {
+                    "sSortAscending": ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
                 }
-            ]),
-            language: {
-            "sProcessing": "Traitement en cours...",
-                "sSearch": "Rechercher&nbsp;:",
-                "sLengthMenu": "Afficher _MENU_ éléments",
-                "sInfo": "Affichage de l'élément _START_ à _END_ sur _TOTAL_ éléments",
-                "sInfoEmpty": "Affichage de l'élément 0 à 0 sur 0 élément",
-                "sInfoFiltered": "(filtré de _MAX_ éléments au total)",
-                "sInfoPostFix": "",
-                "sLoadingRecords": "Chargement en cours...",
-                "sZeroRecords": "Aucun élément à afficher",
-                "sEmptyTable": "Aucune donnée disponible dans le tableau",
-                "oPaginate": {
-                "sFirst": "Premier",
-                    "sPrevious": "Précédent",
-                    "sNext": "Suivant",
-                    "sLast": "Dernier"
-            },
-            "oAria": {
-                "sSortAscending": ": activer pour trier la colonne par ordre croissant",
-                    "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
             }
-        }
-    });
+        });
 
         function resetPopoverPosition() {
             if (popoverPosition !== null) {
