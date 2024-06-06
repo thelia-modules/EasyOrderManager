@@ -1,0 +1,34 @@
+<script>
+    var defaultRender = function ( data, type, row, meta ) {
+        return data;
+    };
+    var checkboxRender = function ( data, type, row, meta ) {
+        if (data && data.id !== undefined) {
+            return '<input type="checkbox" class="select_order" data-id="' + data.id + '">';
+        }
+        return '<a href="#" style="line-height:50px;text-align:center;width: 50px; height: 50px;">Aucune</a>';
+    };
+
+    var hrefRender =  function ( data, type, row, meta ) {
+        return '<a href="' + (data.href || '#') + '">' + (data.label || 'Inconnu') + '</a>';
+    };
+
+    var labelRender = function ( data, type, row, meta ) {
+        return '<span class="label" style="background-color: ' + (data.color || '#ccc') + ';">' + (data.label || 'Inconnu') + '</span>';
+    }
+
+    var actionsRender =  function ( data, type, row, meta ) {
+        var html = '<a href="' + data['hrefPrint'] + '" class="btn btn-default" title="Imprimer">' +
+            '<i class="glyphicon glyphicon-print"></i>' +
+            '</a>' +
+            '<a href="' + data['hrefUpdate'] + '" class="btn btn-info" title="Modifier">' +
+            '<i class="glyphicon glyphicon-edit"></i>' +
+            '</a>';
+        if (!data['isCancelled']) {
+            html += ' <a href="#" class="btn btn-danger js-action-delete" title="Supprimer" data-id="' + data['order_id'] + '">' +
+                '<i class="glyphicon glyphicon-trash"></i>' +
+                '</a>';
+        }
+        return html;
+    };
+</script>

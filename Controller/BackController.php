@@ -15,6 +15,7 @@ namespace EasyOrderManager\Controller;
 
 use EasyOrderManager\EasyOrderManager;
 use EasyOrderManager\Event\BeforeFilterEvent;
+use EasyOrderManager\Event\TemplateColumnDefinitionEvent;
 use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
@@ -54,16 +55,25 @@ class BackController extends ProductController
             return $response;
         }
         $request = $requestStack->getCurrentRequest();
+        $locale = $request->getSession()->getLang()->getLocale();
+        $templateFieldEvent = new TemplateFieldEvent();
+        $dispatcher->dispatch($templateFieldEvent, TemplateFieldEvent::ORDER_MANAGER_TEMPLATE_FIELD);
+
+        $templateColumnDefinitionEvent = new TemplateColumnDefinitionEvent(
+            MoneyFormat::getInstance($request),
+            $locale
+        );
+        $templateColumnDefinitionEvent->initColumnDefinition();
+        $dispatcher->dispatch($templateColumnDefinitionEvent, TemplateColumnDefinitionEvent::ORDER_MANAGER_TEMPLATE_COLUMN_DEFINITION);
+        $columnDefinitions = $templateColumnDefinitionEvent->getColumnDefinition();
+
         if ($request->isXmlHttpRequest()) {
-
-            $locale = $request->getSession()->getLang()->getLocale();
-
             // Use Customer for email column in applySearchCustomer
             $query = OrderQuery::create()
                 ->useCustomerQuery()
                 ->endUse();
 
-            $this->applyOrder($request, $query);
+            $this->applyOrder($request, $query, $dispatcher);
 
             $queryCount = clone $query;
 
@@ -98,60 +108,23 @@ class BackController extends ProductController
 
             /** @var Order $order */
             foreach ($orders as $order) {
-                $amount = $moneyFormat->formatByCurrency(
-                    $order->getTotalAmount(),
-                    2,
-                    '.',
-                    ' ',
-                    $order->getCurrencyId()
-                );
                 // for each defineColumnsDefinition
+                foreach ($orders as $order) {
+                    // for each defineColumnsDefinition
 
-                $updateUrl = URL::getInstance()->absoluteUrl('admin/order/update/'.$order->getId());
-
-                $json['data'][] = [
-                    [
-                        'order_ids' => $order->getId(),
-                    ],
-                    [
-                        'id' => $order->getId(),
-                        'href' => $updateUrl
-                    ],
-                    [
-                        'ref' => [
-                            'value' => $order->getRef(),
-                            'href' => $updateUrl
-                        ]
-                    ],
-                    $order->getCreatedAt('d/m/y H:i:s'),
-                    $order->getInvoiceDate('d/m/y H:i:s'),
-                    $order->getOrderAddressRelatedByInvoiceOrderAddressId()->getCompany(),
-                    [
-                        'href' => URL::getInstance()->absoluteUrl('admin/customer/update?customer_id='.$order->getCustomerId()),
-                        'name' => $order->getOrderAddressRelatedByInvoiceOrderAddressId()->getFirstname().' '.$order->getOrderAddressRelatedByInvoiceOrderAddressId()->getLastname(),
-                    ],
-                    $amount,
-                    [
-                        'name' => $order->getOrderStatus()->setLocale($locale)->getTitle(),
-                        'color' => $order->getOrderStatus()->getColor()
-                    ],
-                    [
-                        'order_id' => $order->getId(),
-                        'hrefUpdate' => $updateUrl,
-                        'hrefPrint' => URL::getInstance()->absoluteUrl('admin/order/pdf/invoice/'.$order->getId().'/1'),
-                        'isCancelled' => $order->isCancelled()
-                    ]
-                ];
+                    $orderDatas = [];
+                    foreach ($columnDefinitions as $definition){
+                        $orderDatas[] = $definition['parseOrderData']($order);
+                    }
+                    $json['data'][]=$orderDatas;
+                }
             }
 
             return new JsonResponse($json);
         }
 
-        $templateFieldEvent = new TemplateFieldEvent();
-        $dispatcher->dispatch($templateFieldEvent, TemplateFieldEvent::ORDER_MANAGER_TEMPLATE_FIELD);
-
         return $this->render('EasyOrderManager/list', [
-            'columnsDefinition' => $this->defineColumnsDefinition(),
+            'columnsDefinition' => $columnDefinitions,
             'theliaVersion' => Thelia::THELIA_VERSION,
             'moduleVersion' => EasyOrderManager::MODULE_VERSION,
             'moduleName' => EasyOrderManager::MODULE_NAME,
@@ -163,9 +136,17 @@ class BackController extends ProductController
      * @param Request $request
      * @return string
      */
-    protected function getOrderColumnName(Request $request): string
+    protected function getOrderColumnName(Request $request, EventDispatcherInterface $dispatcher): string
     {
-        $columnDefinition = $this->defineColumnsDefinition(true)[
+        $locale = $request->getSession()->getLang()->getLocale();
+        $templateColumnDefinitionEvent = new TemplateColumnDefinitionEvent(
+            MoneyFormat::getInstance($request),
+            $locale
+        );
+        $templateColumnDefinitionEvent->initColumnDefinition();
+
+        $dispatcher->dispatch($templateColumnDefinitionEvent, TemplateColumnDefinitionEvent::ORDER_MANAGER_TEMPLATE_COLUMN_DEFINITION);
+        $columnDefinition = $templateColumnDefinitionEvent->getColumnDefinition(true)[
         (int) $request->get('order')[0]['column']
         ];
 
@@ -177,10 +158,10 @@ class BackController extends ProductController
      * @param OrderQuery $query
      * @return void
      */
-    protected function applyOrder(Request $request, OrderQuery $query): void
+    protected function applyOrder(Request $request, OrderQuery $query, EventDispatcherInterface $dispatcher): void
     {
         $query->orderBy(
-            $this->getOrderColumnName($request),
+            $this->getOrderColumnName($request, $dispatcher),
             $this->getOrderDir($request)
         );
     }
