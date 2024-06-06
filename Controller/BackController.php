@@ -73,7 +73,7 @@ class BackController extends ProductController
                 ->useCustomerQuery()
                 ->endUse();
 
-            $this->applyOrder($request, $query);
+            $this->applyOrder($request, $query, $dispatcher);
 
             $queryCount = clone $query;
 
