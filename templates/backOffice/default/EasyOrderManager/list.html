@@ -3,6 +3,9 @@
 {block name="check-resource"}admin.order{/block}
 {block name="check-access"}view{/block}
 {block name="page-title"}Gestion des commandes avec EasyOrderManager{/block}
+{block name="no-return-functions"}
+    {$admin_current_location = 'easy-order-manager'}
+{/block}
 
 {block name="after-admin-css"}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css" rel="stylesheet">
@@ -67,7 +70,7 @@
                             <select id="js-input-status" class="form-control js-refresh-table" data-default="">
                                 <option value="">Aucun état filtré</option>
                                 {loop type='order-status' name='order-status'}
-                                <option value="{$ID}">{$TITLE}</option>
+                                <option value="{$ID}" {if $ID == $selected_status }selected{/if}>{$TITLE}</option>
                                 {/loop}
                             </select>
                         </div>
