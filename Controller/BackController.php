@@ -124,7 +124,8 @@ class BackController extends ProductController
             'theliaVersion' => Thelia::THELIA_VERSION,
             'moduleVersion' => EasyOrderManager::MODULE_VERSION,
             'moduleName' => EasyOrderManager::MODULE_NAME,
-            'template_fields' => $templateFieldEvent->getTemplateFields()
+            'template_fields' => $templateFieldEvent->getTemplateFields(),
+            'selected_status' => $request->get('status')
         ]);
     }
 

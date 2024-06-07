@@ -1,6 +1,30 @@
-<li class="" id="module_menu_easy_product_manager">
-    <a title="Modules" href="{url path="/admin/easy-order-manager/list"}">
-        <span class="icon-orders"></span>
-        <span class="item-text">Gérer les commandes</span>
+{loop name="menu-auth-order" type="auth" role="ADMIN" resource="admin.order" access="VIEW"}
+<li class="{if $admin_current_location == 'easy-order-manager'}active{/if}" id="module_menu_easy_product_manager">
+    <a title="{intl l="Orders"}" href="#collapse-orders" {if $admin_current_location == 'order'}class="open"{/if}>
+    <i class="fas fa-shopping-cart"></i>
+    <span class="item-text">Gérer les commandes</span>
+    <i class="fas fa-chevron-right menu-collapse"></i>
     </a>
+
+    <ul id="collapse-orders" class="collapse {if $admin_current_location == 'order'}in{/if}" role="menu">
+
+        <li role="menuitem">
+            <a class="clearfix" href="{url path="admin/easy-order-manager/list"}">
+            <span class="pull-left">{intl l="All orders"}</span>
+            <span class="label label-lg label-default pull-right">{count type="order" customer="*" backend_context="1"}</span>
+            </a>
+        </li>
+        {loop name="order-status-list" type="order-status"}
+        {$count = {count type="order" customer="*" backend_context="1" status={$ID}}}
+        {if $count}
+        <li role="menuitem">
+            <a class="clearfix" data-target="{url path="admin/easy-order-manager/list"}}{$LABEL|default:null}" href="{url path="admin/easy-order-manager/list" status={$ID}}">
+            <span class="pull-left">{$TITLE}</span>
+            <span class="label label-lg pull-right" style="background-color: {$COLOR};">{$count}</span>
+            </a>
+        </li>
+        {/if}
+        {/loop}
+    </ul>
 </li>
+{/loop}
