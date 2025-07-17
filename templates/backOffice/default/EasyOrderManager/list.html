@@ -83,6 +83,17 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-md-3 filter">
+                        <div class="form-group">
+                            <label for="js-input-delivery-module" class="control-label">Moyen de livraison :</label>
+                            <select id="js-input-delivery-module" class="form-control js-refresh-table" data-default="">
+                                <option value="">Aucun moyen de livraison filtré</option>
+                                {loop type='module' name='delivery-modules' module_type=2}
+                                <option value="{$ID}">{$TITLE}</option>
+                                {/loop}
+                            </select>
+                        </div>
+                    </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label class="control-label" for="js-input-created-at-from">Création : À partir du</label>
@@ -269,6 +280,7 @@
                         data.filter = {
                             status: $module.find('#js-input-status').val(),
                             paymentModuleId: $module.find('#js-input-payment-module').val(),
+                            deliveryModuleId: $module.find('#js-input-delivery-module').val(),
                             createdAtFrom: $module.find('#js-input-created-at-from').val(),
                             createdAtTo: $module.find('#js-input-created-at-to').val(),
                             invoiceDateFrom: $module.find('#js-input-invoice-date-from').val(),
