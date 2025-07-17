@@ -82,6 +82,7 @@ class BackController extends ProductController
 
             $this->filterByStatus($request, $query);
             $this->filterByPaymentModule($request, $query);
+            $this->filterByDeliveryModule($request, $query);
             $this->filterByCreatedAt($request, $query);
             $this->filterByInvoiceDate($request, $query);
 
@@ -302,6 +303,13 @@ class BackController extends ProductController
     {
         if (0 !== $paymentModuleId = (int) $request->get('filter')['paymentModuleId']) {
             $query->filterByPaymentModuleId($paymentModuleId);
+        }
+    }
+
+    protected function filterByDeliveryModule(Request $request, OrderQuery $query): void
+    {
+        if (0 !== $paymentModuleId = (int) $request->get('filter')['deliveryModuleId']) {
+            $query->filterByDeliveryModuleId($paymentModuleId);
         }
     }
 
