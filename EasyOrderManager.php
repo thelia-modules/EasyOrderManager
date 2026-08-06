@@ -19,13 +19,18 @@ class EasyOrderManager extends BaseModule
 {
     /** @var string */
     const DOMAIN_NAME = 'easyordermanager';
-    const MODULE_VERSION = '1.0.1';
+    const MODULE_VERSION = '2.1.4';
     const MODULE_NAME = 'EasyOrderManager';
 
     public static function configureServices(ServicesConfigurator $servicesConfigurator): void
     {
         $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
-            ->exclude([THELIA_MODULE_DIR . ucfirst(self::getModuleCode()). "/I18n/*"])
+            ->exclude([
+                __DIR__.'/I18n',
+                __DIR__.'/Config',
+                __DIR__.'/Tests',
+                __FILE__,
+            ])
             ->autowire(true)
             ->autoconfigure(true);
     }

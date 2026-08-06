@@ -1,0 +1,12 @@
+{# Back hook fragment — main.in-top-menu-items.
+   Modeled after EasyCustomerManager/EasyProductManager's own conversion of this same hook:
+   a single flat nav item (the old T2 collapsible submenu with a per-status order count is
+   dropped, since the default-twig sidebar already exposes order counts by status globally —
+   see data-testid="bo-nav-order-count-*" on every admin page). #}
+{% set is_active = admin_current_location is defined and admin_current_location starts with 'admin_easy_order_manager' %}
+<li class="nav-item" id="module_menu_easy_order_manager">
+    <a class="nav-link {{ is_active ? 'active' : '' }}" title="{{ 'Manage orders'|trans({}, 'easyordermanager') }}" href="{{ path('admin_easy_order_manager_list') }}">
+        <i class="bi bi-cart me-2" aria-hidden="true"></i>
+        <span class="item-text">{{ 'Manage orders'|trans({}, 'easyordermanager') }}</span>
+    </a>
+</li>

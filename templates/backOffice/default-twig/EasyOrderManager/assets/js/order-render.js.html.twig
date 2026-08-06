@@ -14,19 +14,19 @@
     };
 
     var labelRender = function ( data, type, row, meta ) {
-        return '<span class="label" style="background-color: ' + (data.color || '#ccc') + ';">' + (data.label || 'Inconnu') + '</span>';
+        return '<span class="badge" style="background-color: ' + (data.color || '#ccc') + ';">' + (data.label || 'Inconnu') + '</span>';
     }
 
     var actionsRender =  function ( data, type, row, meta ) {
-        var html = '<a href="' + data['hrefPrint'] + '" class="btn btn-default" title="Imprimer">' +
-            '<i class="glyphicon glyphicon-print"></i>' +
+        var html = '<a href="' + data['hrefPrint'] + '" class="btn btn-outline-secondary btn-sm" title="Imprimer">' +
+            '<i class="bi bi-printer"></i>' +
             '</a>' +
-            '<a href="' + data['hrefUpdate'] + '" class="btn btn-info" title="Modifier">' +
-            '<i class="glyphicon glyphicon-edit"></i>' +
+            ' <a href="' + data['hrefUpdate'] + '" class="btn btn-outline-primary btn-sm" title="Modifier">' +
+            '<i class="bi bi-pencil-square"></i>' +
             '</a>';
         if (!data['isCancelled']) {
-            html += ' <a href="#" class="btn btn-danger js-action-delete" title="Supprimer" data-id="' + data['order_id'] + '">' +
-                '<i class="glyphicon glyphicon-trash"></i>' +
+            html += ' <a href="#" class="btn btn-outline-danger btn-sm js-action-delete" title="Supprimer" data-id="' + data['order_id'] + '">' +
+                '<i class="bi bi-trash"></i>' +
                 '</a>';
         }
         return html;
