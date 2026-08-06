@@ -23,32 +23,33 @@ use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Thelia\Controller\Admin\ProductController;
+use Thelia\Controller\Admin\BaseAdminController;
+use Thelia\Core\Event\Order\OrderEvent;
+use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\HttpFoundation\JsonResponse;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
-use Thelia\Core\Thelia;
+use Thelia\Core\TheliaKernel;
 use Thelia\Core\Translation\Translator;
 use Thelia\Model\Map\CustomerTableMap;
 use Thelia\Model\Map\OrderAddressTableMap;
 use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
+use Thelia\Model\OrderStatusQuery;
+use Thelia\Model\ModuleQuery;
+use Thelia\Module\BaseModule;
 use Thelia\Tools\MoneyFormat;
 use Thelia\Tools\URL;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @Route("/admin/easy-order-manager", name="admin_easy_order_manager")
- */
-class BackController extends ProductController
+#[Route('/admin/easy-order-manager', name: 'admin_easy_order_manager')]
+class BackController extends BaseAdminController
 {
     protected const ORDER_INVOICE_ADDRESS_JOIN = 'orderInvoiceAddressJoin';
 
-    /**
-     * @Route("/list", name="_list", methods={"GET","POST"})
-     */
+    #[Route('/list', name: '_list', methods: ['GET', 'POST'])]
     public function listAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
@@ -120,13 +121,43 @@ class BackController extends ProductController
             return new JsonResponse($json);
         }
 
+        $orderStatuses = [];
+        foreach (OrderStatusQuery::create()->find() as $orderStatus) {
+            $orderStatus->setLocale($locale);
+            $orderStatuses[] = [
+                'id' => $orderStatus->getId(),
+                'title' => $orderStatus->getTitle(),
+            ];
+        }
+
+        $paymentModules = [];
+        foreach (ModuleQuery::create()->filterByType(BaseModule::PAYMENT_MODULE_TYPE)->find() as $module) {
+            $module->setLocale($locale);
+            $paymentModules[] = [
+                'id' => $module->getId(),
+                'title' => $module->getTitle(),
+            ];
+        }
+
+        $deliveryModules = [];
+        foreach (ModuleQuery::create()->filterByType(BaseModule::DELIVERY_MODULE_TYPE)->find() as $module) {
+            $module->setLocale($locale);
+            $deliveryModules[] = [
+                'id' => $module->getId(),
+                'title' => $module->getTitle(),
+            ];
+        }
+
         return $this->render('EasyOrderManager/list', [
             'columnsDefinition' => $columnDefinitions,
-            'theliaVersion' => Thelia::THELIA_VERSION,
+            'theliaVersion' => TheliaKernel::THELIA_VERSION,
             'moduleVersion' => EasyOrderManager::MODULE_VERSION,
             'moduleName' => EasyOrderManager::MODULE_NAME,
             'template_fields' => $templateFieldEvent->getTemplateFields(),
-            'selected_status' => $request->get('status')
+            'selected_status' => $request->get('status'),
+            'order_statuses' => $orderStatuses,
+            'payment_modules' => $paymentModules,
+            'delivery_modules' => $deliveryModules,
         ]);
     }
 
@@ -199,87 +230,6 @@ class BackController extends ProductController
     protected function getDraw(Request $request): int
     {
         return (int) $request->get('draw');
-    }
-
-    /**
-     * @param bool $withPrivateData
-     * @return array
-     */
-    protected function defineColumnsDefinition($withPrivateData = false): array
-    {
-        $i = -1;
-
-        $definitions = [
-            [
-                'name' => 'checkbox',
-                'targets' => ++$i,
-                'title' =>  '<input type="checkbox" id="select-all" />',
-                'orderable' => false,
-                'searchable' => false,
-            ],
-            [
-                'name' => 'id',
-                'targets' => ++$i,
-                'orm' => OrderTableMap::COL_ID,
-                'title' => Translator::getInstance()->trans('Id', [], EasyOrderManager::DOMAIN_NAME),
-            ],
-            [
-                'name' => 'ref',
-                'targets' => ++$i,
-                'orm' => OrderTableMap::COL_REF,
-                'title' => 'Référence',
-            ],
-            [
-                'name' => 'create_date',
-                'targets' => ++$i,
-                'orm' => OrderTableMap::COL_CREATED_AT,
-                'title' => 'Date de création',
-            ],
-            [
-                'name' => 'invoice_date',
-                'targets' => ++$i,
-                'orm' => OrderTableMap::COL_INVOICE_DATE,
-                'title' => 'Date de facturation',
-            ],
-            [
-                'name' => 'company',
-                'targets' => ++$i,
-                'title' => 'Entreprise',
-                'orderable' => false,
-            ],
-            [
-                'name' => 'client',
-                'targets' => ++$i,
-                'title' => 'Nom du client',
-                'orderable' => false,
-            ],
-            [
-                'name' => 'amount',
-                'targets' => ++$i,
-                'title' => 'Montant',
-                'orderable' => false,
-            ],
-            [
-                'name' => 'status',
-                'targets' => ++$i,
-                'title' => 'Etat',
-                'orderable' => false,
-            ],
-            [
-                'name' => 'action',
-                'targets' => ++$i,
-                'title' => 'Action',
-                'orderable' => false,
-            ]
-        ];
-
-        if (!$withPrivateData) {
-            foreach ($definitions as &$definition) {
-                unset($definition['orm']);
-            }
-        }
-
-        return $definitions;
     }
 
     /**
@@ -438,18 +388,20 @@ class BackController extends ProductController
     }
 
     /**
-     * @Route("/change-status-selected", name="change_status_selected", methods={"POST"})
      * @throws \JsonException
      */
-    public function changeStatusSelectedAction(Request $request)
+    #[Route('/change-status-selected', name: 'change_status_selected', methods: ['POST'])]
+    public function changeStatusSelectedAction(Request $request, EventDispatcherInterface $eventDispatcher)
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
             return $response;
         }
 
+        $this->getTokenProvider()->checkToken((string) $request->query->get('_token'));
+
         $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $orderIds = $data['order_ids'];
-        $statusId = $data['status_id'];
+        $statusId = (int) $data['status_id'];
 
         $orders = OrderQuery::create()
             ->filterById($orderIds, Criteria::IN)
@@ -457,9 +409,12 @@ class BackController extends ProductController
 
         $updatedOrders = [];
 
+        // Le passage par ORDER_UPDATE_STATUS garantit les effets de bord du coeur
+        // (réajustement du stock, listeners métier), contrairement à un save() direct.
         foreach ($orders as $order) {
-            $order->setStatusId($statusId);
-            $order->save();
+            $orderEvent = new OrderEvent($order);
+            $orderEvent->setStatus($statusId);
+            $eventDispatcher->dispatch($orderEvent, TheliaEvents::ORDER_UPDATE_STATUS);
             $updatedOrders[] = $order->getId();
         }
 
@@ -472,15 +427,17 @@ class BackController extends ProductController
     }
 
     /**
-     * @Route("/get-status-selected", name="get_status_selected", methods={"POST"})
      * @throws \JsonException
      * @throws PropelException
      */
+    #[Route('/get-status-selected', name: 'get_status_selected', methods: ['POST'])]
     public function getStatusSelectedAction(Request $request)
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
             return $response;
         }
+
+        $this->getTokenProvider()->checkToken((string) $request->query->get('_token'));
 
         $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $orderIds = $data['order_ids'];

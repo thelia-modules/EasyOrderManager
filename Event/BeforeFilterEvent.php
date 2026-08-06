@@ -12,6 +12,7 @@ class BeforeFilterEvent extends ActionEvent
 
     /** @var Request */
     protected $request;
+
     /** @var OrderQuery */
     protected $query;
 

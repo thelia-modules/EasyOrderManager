@@ -1,0 +1,410 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Manage orders'|trans({}, 'easyordermanager') }}{% endblock %}
+{% block body_testid %}easy-order-manager-list{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Manage orders'|trans({}, 'easyordermanager') }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block head_extra %}
+{#
+  NOTE: jQuery, DataTables and Select2 are loaded from CDN below because this page relies on
+  jQuery-dependent libraries (DataTables server-side) that have no straightforward vanilla-JS
+  equivalent. Same choice already made in EasyProductManager/EasyCustomerManager.
+#}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+<style>
+    .js-list {
+        width: 100% !important;
+    }
+    .js-animate-info-button {
+        animation: AnimateInfoButton 2s infinite;
+    }
+    @keyframes AnimateInfoButton {
+        0% { opacity: 1; }
+        50% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="module-easy-order-manager" class="container-fluid" data-testid="easy-order-manager-page">
+    <div class="card">
+        <div class="card-header">
+            <h1 class="h4 mb-0">{{ 'Manage orders'|trans({}, 'easyordermanager') }}</h1>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-search-order">{{ 'Search order'|trans({}, 'easyordermanager') }}</label>
+                    <input type="text" class="form-control js-refresh-table" data-default="" id="js-input-search-order" placeholder="{{ 'Id or reference'|trans({}, 'easyordermanager') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-search-company">{{ 'Search company'|trans({}, 'easyordermanager') }}</label>
+                    <input type="text" class="form-control js-refresh-table" data-default="" id="js-input-search-company" placeholder="{{ 'Company name'|trans({}, 'easyordermanager') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-search-customer">{{ 'Search customer'|trans({}, 'easyordermanager') }}</label>
+                    <input type="text" class="form-control js-refresh-table" data-default="" id="js-input-search-customer" placeholder="{{ 'Customer name, email or phone'|trans({}, 'easyordermanager') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-length">{{ 'Number of items'|trans({}, 'easyordermanager') }}</label>
+                    <select id="js-input-length" class="form-select js-refresh-table">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2 align-items-end mt-1">
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-status">{{ 'Status'|trans({}, 'easyordermanager') }}</label>
+                    <select id="js-input-status" class="form-select js-refresh-table" data-default="">
+                        <option value="">{{ 'No status filter'|trans({}, 'easyordermanager') }}</option>
+                        {% for status in order_statuses %}
+                            <option value="{{ status.id }}" {{ selected_status and selected_status == status.id ? 'selected' : '' }}>{{ status.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-payment-module">{{ 'Payment method'|trans({}, 'easyordermanager') }}</label>
+                    <select id="js-input-payment-module" class="form-select js-refresh-table" data-default="">
+                        <option value="">{{ 'No payment method filter'|trans({}, 'easyordermanager') }}</option>
+                        {% for module in payment_modules %}
+                            <option value="{{ module.id }}">{{ module.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-delivery-module">{{ 'Delivery method'|trans({}, 'easyordermanager') }}</label>
+                    <select id="js-input-delivery-module" class="form-select js-refresh-table" data-default="">
+                        <option value="">{{ 'No delivery method filter'|trans({}, 'easyordermanager') }}</option>
+                        {% for module in delivery_modules %}
+                            <option value="{{ module.id }}">{{ module.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2 align-items-end mt-1">
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-created-at-from">{{ 'Created from'|trans({}, 'easyordermanager') }}</label>
+                    <input type="date" id="js-input-created-at-from" class="form-control js-refresh-table">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-created-at-to">{{ 'Created to'|trans({}, 'easyordermanager') }}</label>
+                    <input type="date" id="js-input-created-at-to" class="form-control js-refresh-table" value="">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-invoice-date-from">{{ 'Invoiced from'|trans({}, 'easyordermanager') }}</label>
+                    <input type="date" id="js-input-invoice-date-from" class="form-control js-refresh-table">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="js-input-invoice-date-to">{{ 'Invoiced to'|trans({}, 'easyordermanager') }}</label>
+                    <input type="date" id="js-input-invoice-date-to" class="form-control js-refresh-table" value="">
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <button id="change-status-selected-items" class="btn btn-outline-danger" data-testid="easy-order-manager-change-status-selected">
+                        {{ 'Change status of selected orders'|trans({}, 'easyordermanager') }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                {# Extension point: modules (e.g. Anselmi) push extra filter template paths here via
+                   EasyOrderManager\Event\TemplateFieldEvent::addTemplateField(). The registered name
+                   ends in `.html` (legacy Smarty convention, out of our scope to rename): try the
+                   Twig-suffixed variant first, silently ignore if neither exists. #}
+                {% for template in template_fields %}
+                    {% include [template ~ '.twig', template] ignore missing %}
+                {% endfor %}
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <table class="js-list table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                {% for definition in columnsDefinition %}
+                                    <td>{{ definition.title|raw }}</td>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Info -->
+    <div class="modal fade" id="modal-info" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ 'Module information'|trans({}, 'easyordermanager') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <iframe width="100%" frameborder="0" height="300" src="https://www.gilles-bourgeat.fr/thelia/module/easy-product-manager?tv={{ theliaVersion }}&mv={{ moduleVersion }}&mn={{ moduleName }}&lang={{ app.request.session.lang.locale }}"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Change Status Selected Orders -->
+    <div class="modal fade" id="modal-change-status" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ 'Change status of selected orders'|trans({}, 'easyordermanager') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="change-status-select">{{ 'New status'|trans({}, 'easyordermanager') }}</label>
+                        <select id="change-status-select" class="form-select">
+                            {% for status in order_statuses %}
+                                <option value="{{ status.id }}">{{ status.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="current-status-list">
+                        <label class="form-label">{{ 'Current status of selected orders:'|trans({}, 'easyordermanager') }}</label>
+                        <ul id="current-status-list-content" class="list-group"></ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                    <button type="button" class="btn btn-primary" id="confirm-change-status">{{ 'Change status'|trans({}, 'easyordermanager') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cancel Order Confirmation -->
+    <div class="modal fade" id="cancel_order_dialog" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ 'Delete an order'|trans }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ 'Do you really want to cancel this order ?'|trans }}</p>
+                    <form id="cancel-order-form" action="/admin/order/update/status?_token={{ assignToken() }}" method="post">
+                        <input type="hidden" name="order_id" id="cancel_order_id" value="">
+                        <input type="hidden" name="status_id" value="5">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                    <button type="submit" form="cancel-order-form" class="btn btn-danger">{{ 'Delete'|trans }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+{{ parent() }}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+
+{% include '@EasyOrderManagerModule/backOffice/default-twig/EasyOrderManager/assets/js/order-render.js.html.twig' %}
+
+<script>
+    "use strict";
+    (function($, $module){
+        $('#page-wrapper .page-header').append('<button class="btn btn-outline-info js-module-easy-order-manager-info float-end"><i class="bi bi-info-circle"></i></button>');
+
+        var currencySymbol = '{{ currencySymbol|default('') }}';
+
+        var tv = '{{ theliaVersion }}',
+            mv = '{{ moduleVersion }}',
+            mn = '{{ moduleName }}',
+            id = $module.attr('id'),
+            $modalChangeStatus = $module.find('#modal-change-status'),
+            $modalDelete = $module.find('#cancel_order_dialog');
+
+        var table = $module.find('.js-list').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                lengthChange: false,
+                scrollX: true,
+                order: [[1, "desc"]],
+                ajax: {
+                    url: "{{ path('admin_easy_order_manager_list') }}",
+                    method: 'POST',
+                    data: function (data) {
+                        data.filter = {
+                            status: $module.find('#js-input-status').val(),
+                            paymentModuleId: $module.find('#js-input-payment-module').val(),
+                            deliveryModuleId: $module.find('#js-input-delivery-module').val(),
+                            createdAtFrom: $module.find('#js-input-created-at-from').val(),
+                            createdAtTo: $module.find('#js-input-created-at-to').val(),
+                            invoiceDateFrom: $module.find('#js-input-invoice-date-from').val(),
+                            invoiceDateTo: $module.find('#js-input-invoice-date-to').val(),
+                            searchOrder: $module.find('#js-input-search-order').val(),
+                            searchCompany: $module.find('#js-input-search-company').val(),
+                            searchCustomer: $module.find('#js-input-search-customer').val()
+                        };
+                        [...document.querySelectorAll(".js-filter-element")].forEach(function (el) {
+                            data.filter[el.name] = el.value;
+                        });
+                        data.searchOrder = { "value": $module.find('#js-input-search-order').val(), regex: false };
+                        data.searchCompany = { "value": $module.find('#js-input-search-company').val(), regex: false };
+                        data.searchCustomer = { "value": $module.find('#js-input-search-customer').val(), regex: false };
+                        data.length = $module.find('#js-input-length').val();
+                    }
+                },
+                displayLength: 25,
+                columnDefs: {{ columnsDefinition|json_encode|raw }}.map(function (columnDefinition) {
+                    columnDefinition.render = columnDefinition.render ? eval(columnDefinition.render) : defaultRender;
+                    return columnDefinition;
+                }),
+                language: {
+                    "sProcessing": "Traitement en cours...",
+                    "sSearch": "Rechercher&nbsp;:",
+                    "sLengthMenu": "Afficher _MENU_ éléments",
+                    "sInfo": "Affichage de l'élément _START_ à _END_ sur _TOTAL_ éléments",
+                    "sInfoEmpty": "Affichage de l'élément 0 à 0 sur 0 élément",
+                    "sInfoFiltered": "(filtré de _MAX_ éléments au total)",
+                    "sInfoPostFix": "",
+                    "sLoadingRecords": "Chargement en cours...",
+                    "sZeroRecords": "Aucun élément à afficher",
+                    "sEmptyTable": "Aucune donnée disponible dans le tableau",
+                    "oPaginate": { "sFirst": "Premier", "sPrevious": "Précédent", "sNext": "Suivant", "sLast": "Dernier" },
+                    "oAria": {
+                        "sSortAscending": ": activer pour trier la colonne par ordre croissant",
+                        "sSortDescending": ": activer pour trier la colonne par ordre décroissant"
+                    }
+                }
+            });
+
+        var filters = $module.find('.js-refresh-table');
+        function refreshFilter() {
+            filters.each(function () {
+                if ('undefined' !== typeof this.dataset.default) {
+                    var val = $(this).val();
+                    if (val === null) { val = ''; }
+                    if (val !== this.dataset.default) {
+                        $(this).closest('.col-md-3, .col-md-2').css('backgroundColor', 'rgba(0, 102, 255, 0.1)');
+                    } else {
+                        $(this).closest('.col-md-3, .col-md-2').css('backgroundColor', '');
+                    }
+                }
+            });
+        }
+
+        var timer = null;
+        $module.find('.js-refresh-table').on('change keyup', function (event) {
+            if (event.type === "keyup") {
+                if (timer !== null) { clearTimeout(timer); }
+                timer = setTimeout(function () {
+                    refreshFilter();
+                    table.ajax.reload();
+                }, 350);
+            } else {
+                refreshFilter();
+                table.ajax.reload();
+            }
+        });
+
+        table.on('click', '.js-action-delete', function (e) {
+            e.preventDefault();
+            $modalDelete.find('#cancel_order_id').val($(this).data('id'));
+            bootstrap.Modal.getOrCreateInstance($modalDelete[0]).show();
+        });
+
+        $(document).ready(function () {
+            $('#select-all').on('click', function () {
+                var rows = $('.js-list').DataTable().rows({ 'search': 'applied' }).nodes();
+                $('input[type="checkbox"]', rows).prop('checked', this.checked);
+            });
+
+            $('#change-status-selected-items').on('click', function () {
+                var selectedIds = [];
+                $('.select_order:checked').each(function () {
+                    selectedIds.push($(this).data('id'));
+                });
+
+                if (selectedIds.length === 0) {
+                    alert('{{ 'No order selected.'|trans({}, 'easyordermanager')|e('js') }}');
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ path('admin_easy_order_managerget_status_selected') }}?_token={{ assignToken() }}",
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ order_ids: selectedIds }),
+                    success: function (response) {
+                        var listContent = '';
+                        (response.statuses || []).forEach(function (status) {
+                            listContent += '<li class="list-group-item">' +
+                                'Commande ' + status.order_id + ': ' +
+                                '<span class="badge" style="background-color:' + status.color + ';">' + status.status + '</span>' +
+                                '</li>';
+                        });
+                        $('#current-status-list-content').html(listContent);
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-change-status')).show();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('{{ 'An error occurred:'|trans({}, 'easyordermanager')|e('js') }} ' + error);
+                    }
+                });
+            });
+
+            $('#confirm-change-status').on('click', function () {
+                var selectedIds = [];
+                $('.select_order:checked').each(function () {
+                    selectedIds.push($(this).data('id'));
+                });
+                var newStatus = $('#change-status-select').val();
+
+                if (selectedIds.length === 0) {
+                    alert('{{ 'No order selected.'|trans({}, 'easyordermanager')|e('js') }}');
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ path('admin_easy_order_managerchange_status_selected') }}?_token={{ assignToken() }}",
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ order_ids: selectedIds, status_id: newStatus }),
+                    success: function () {
+                        table.ajax.reload(null, false);
+                        $('#select-all').prop('checked', false);
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-change-status')).hide();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('{{ 'An error occurred:'|trans({}, 'easyordermanager')|e('js') }} ' + error);
+                    }
+                });
+            });
+        });
+
+        $('.js-module-easy-order-manager-info').on('click', function () {
+            bootstrap.Modal.getOrCreateInstance($module.find('#modal-info')[0]).show();
+            $(this).removeClass('js-animate-info-button');
+        });
+
+    }(jQuery, jQuery('#module-easy-order-manager')));
+</script>
+{% endblock %}
