@@ -31,7 +31,6 @@ use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\TheliaKernel;
-use Thelia\Core\Translation\Translator;
 use Thelia\Model\Map\CustomerTableMap;
 use Thelia\Model\Map\OrderAddressTableMap;
 use Thelia\Model\Map\OrderTableMap;
@@ -41,7 +40,6 @@ use Thelia\Model\OrderStatusQuery;
 use Thelia\Model\ModuleQuery;
 use Thelia\Module\BaseModule;
 use Thelia\Tools\MoneyFormat;
-use Thelia\Tools\URL;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/admin/easy-order-manager', name: 'admin_easy_order_manager')]
@@ -56,6 +54,10 @@ class BackController extends BaseAdminController
             return $response;
         }
         $request = $requestStack->getCurrentRequest();
+        if (null === $request || !$request->hasSession()) {
+            return $this->errorPage('This action requires an HTTP request with a session.', 400);
+        }
+
         $locale = $request->getSession()->getLang()->getLocale();
         $templateFieldEvent = new TemplateFieldEvent();
         $dispatcher->dispatch($templateFieldEvent, TemplateFieldEvent::ORDER_MANAGER_TEMPLATE_FIELD);
@@ -154,20 +156,16 @@ class BackController extends BaseAdminController
             'moduleVersion' => EasyOrderManager::MODULE_VERSION,
             'moduleName' => EasyOrderManager::MODULE_NAME,
             'template_fields' => $templateFieldEvent->getTemplateFields(),
-            'selected_status' => $request->get('status'),
+            'selected_status' => $request->query->get('status'),
             'order_statuses' => $orderStatuses,
             'payment_modules' => $paymentModules,
             'delivery_modules' => $deliveryModules,
         ]);
     }
 
-    /**
-     * @param Request $request
-     * @return string
-     */
     protected function getOrderColumnName(Request $request, EventDispatcherInterface $dispatcher): string
     {
-        $locale = $request->getSession()->getLang()->getLocale();
+        $locale = $request->hasSession() ? $request->getSession()->getLang()->getLocale() : $request->getLocale();
         $templateColumnDefinitionEvent = new TemplateColumnDefinitionEvent(
             MoneyFormat::getInstance($request),
             $locale
@@ -176,17 +174,12 @@ class BackController extends BaseAdminController
 
         $dispatcher->dispatch($templateColumnDefinitionEvent, TemplateColumnDefinitionEvent::ORDER_MANAGER_TEMPLATE_COLUMN_DEFINITION);
         $columnDefinition = $templateColumnDefinitionEvent->getColumnDefinition(true)[
-        (int) $request->get('order')[0]['column']
+            (int) ($request->request->all('order')[0]['column'] ?? 0)
         ];
 
         return $columnDefinition['orm'];
     }
 
-    /**
-     * @param Request $request
-     * @param OrderQuery $query
-     * @return void
-     */
     protected function applyOrder(Request $request, OrderQuery $query, EventDispatcherInterface $dispatcher): void
     {
         $query->orderBy(
@@ -195,108 +188,71 @@ class BackController extends BaseAdminController
         );
     }
 
-    /**
-     * @param Request $request
-     * @return string
-     */
     protected function getOrderDir(Request $request): string
     {
-        return (string) $request->get('order')[0]['dir'] === 'asc' ? Criteria::ASC : Criteria::DESC;
+        return 'asc' === (string) ($request->request->all('order')[0]['dir'] ?? '') ? Criteria::ASC : Criteria::DESC;
     }
 
-    /**
-     * @param Request $request
-     * @return int
-     */
     protected function getLength(Request $request): int
     {
-        return (int) $request->get('length');
+        return (int) $request->request->get('length');
     }
 
-    /**
-     * @param Request $request
-     * @return int
-     */
     protected function getOffset(Request $request): int
     {
-        return (int) $request->get('start');
+        return (int) $request->request->get('start');
     }
 
-
-    /**
-     * @param Request $request
-     * @return int
-     */
     protected function getDraw(Request $request): int
     {
-        return (int) $request->get('draw');
+        return (int) $request->request->get('draw');
     }
 
-    /**
-     * @param Request $request
-     * @param OrderQuery $query
-     * @return void
-     */
     protected function filterByStatus(Request $request, OrderQuery $query): void
     {
-        if (0 !== $statusId = (int) $request->get('filter')['status']) {
+        if (0 !== $statusId = (int) ($request->request->all('filter')['status'] ?? 0)) {
             $query->filterByStatusId($statusId);
         }
     }
 
-    /**
-     * @param Request $request
-     * @param OrderQuery $query
-     * @return void
-     */
     protected function filterByPaymentModule(Request $request, OrderQuery $query): void
     {
-        if (0 !== $paymentModuleId = (int) $request->get('filter')['paymentModuleId']) {
+        if (0 !== $paymentModuleId = (int) ($request->request->all('filter')['paymentModuleId'] ?? 0)) {
             $query->filterByPaymentModuleId($paymentModuleId);
         }
     }
 
     protected function filterByDeliveryModule(Request $request, OrderQuery $query): void
     {
-        if (0 !== $paymentModuleId = (int) $request->get('filter')['deliveryModuleId']) {
-            $query->filterByDeliveryModuleId($paymentModuleId);
+        if (0 !== $deliveryModuleId = (int) ($request->request->all('filter')['deliveryModuleId'] ?? 0)) {
+            $query->filterByDeliveryModuleId($deliveryModuleId);
         }
     }
 
-    /**
-     * @param Request $request
-     * @param OrderQuery $query
-     * @return void
-     */
     protected function filterByCreatedAt(Request $request, OrderQuery $query): void
     {
-        if ('' !== $createdAtFrom = $request->get('filter')['createdAtFrom']) {
+        $filter = $request->request->all('filter');
+
+        if ('' !== $createdAtFrom = (string) ($filter['createdAtFrom'] ?? '')) {
             $query->filterByCreatedAt(sprintf("%s 00:00:00", $createdAtFrom), Criteria::GREATER_EQUAL);
         }
-        if ('' !== $createdAtTo = $request->get('filter')['createdAtTo']) {
+        if ('' !== $createdAtTo = (string) ($filter['createdAtTo'] ?? '')) {
             $query->filterByCreatedAt(sprintf("%s 23:59:59", $createdAtTo), Criteria::LESS_EQUAL);
         }
     }
 
-    /**
-     * @param Request $request
-     * @param OrderQuery $query): void
-     */
     protected function filterByInvoiceDate(Request $request, OrderQuery $query): void
     {
-        if ('' !== $invoiceDateFrom = $request->get('filter')['invoiceDateFrom']) {
+        $filter = $request->request->all('filter');
+
+        if ('' !== $invoiceDateFrom = (string) ($filter['invoiceDateFrom'] ?? '')) {
             $query->filterByInvoiceDate(sprintf("%s 00:00:00", $invoiceDateFrom), Criteria::GREATER_EQUAL);
         }
-        if ('' !== $invoiceDateTo = $request->get('filter')['invoiceDateTo']) {
+        if ('' !== $invoiceDateTo = (string) ($filter['invoiceDateTo'] ?? '')) {
             $query->filterByInvoiceDate(sprintf("%s 23:59:59", $invoiceDateTo), Criteria::LESS_EQUAL);
         }
     }
 
-    /**
-     * @param Request $request
-     * @param OrderQuery $query
-     * @return void
-     */
     protected function applySearchOrder(Request $request, OrderQuery $query): void
     {
         $value = $this->getSearchValue($request, 'searchOrder');
@@ -310,9 +266,6 @@ class BackController extends BaseAdminController
     }
 
     /**
-     * @param Request $request
-     * @param OrderQuery $query
-     * @return void
      * @throws PropelException
      */
     protected function applySearchCompany(Request $request, OrderQuery $query): void
@@ -338,9 +291,6 @@ class BackController extends BaseAdminController
     }
 
     /**
-     * @param Request $request
-     * @param OrderQuery $query
-     * @return void
      * @throws PropelException
      */
     protected function applySearchCustomer(Request $request, OrderQuery $query): void
@@ -377,21 +327,16 @@ class BackController extends BaseAdminController
         }
     }
 
-    /**
-     * @param Request $request
-     * @param $searchKey
-     * @return string
-     */
-    protected function getSearchValue(Request $request, $searchKey): string
+    protected function getSearchValue(Request $request, string $searchKey): string
     {
-        return (string) $request->get($searchKey)['value'];
+        return (string) ($request->request->all($searchKey)['value'] ?? '');
     }
 
     /**
      * @throws \JsonException
      */
     #[Route('/change-status-selected', name: '_change_status_selected', methods: ['POST'])]
-    public function changeStatusSelectedAction(Request $request, EventDispatcherInterface $eventDispatcher)
+    public function changeStatusSelectedAction(Request $request, EventDispatcherInterface $eventDispatcher): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
             return $response;
@@ -431,7 +376,7 @@ class BackController extends BaseAdminController
      * @throws PropelException
      */
     #[Route('/get-status-selected', name: '_get_status_selected', methods: ['POST'])]
-    public function getStatusSelectedAction(Request $request)
+    public function getStatusSelectedAction(Request $request): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
             return $response;
