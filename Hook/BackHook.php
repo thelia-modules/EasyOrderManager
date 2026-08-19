@@ -18,10 +18,20 @@ use Thelia\Core\Hook\BaseHook;
 
 class BackHook extends BaseHook
 {
-    public function onMainInTopMenuItems(HookRenderEvent $event)
+    public function onMainInTopMenuItems(HookRenderEvent $event): void
     {
         $event->add(
-            $this->render('EasyOrderManager/hook/main.in.top.menu.items.html', [])
+            $this->render('EasyOrderManager/hook/main.in.top.menu.items.html.twig', [])
         );
+    }
+
+    public static function getSubscribedHooks(): array
+    {
+        return [
+            'main.in-top-menu-items' => [
+                'type' => 'back',
+                'method' => 'onMainInTopMenuItems',
+            ],
+        ];
     }
 }
