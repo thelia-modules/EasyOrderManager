@@ -3,14 +3,10 @@
 namespace EasyOrderManager\Event;
 
 use EasyOrderManager\EasyOrderManager;
-use phpDocumentor\Guides\RenderCommand;
-use Symfony\Component\HttpFoundation\Request;
 use Thelia\Core\Event\ActionEvent;
 use Thelia\Core\Translation\Translator;
-use Thelia\Model\Base\Order;
+use Thelia\Model\Order;
 use Thelia\Model\Map\OrderTableMap;
-use Thelia\Model\OrderQuery;
-use Thelia\Tools\MoneyFormat;
 use Thelia\Tools\URL;
 
 class TemplateColumnDefinitionEvent extends ActionEvent

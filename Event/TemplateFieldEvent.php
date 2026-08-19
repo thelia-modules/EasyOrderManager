@@ -2,9 +2,7 @@
 
 namespace EasyOrderManager\Event;
 
-use Symfony\Component\HttpFoundation\Request;
 use Thelia\Core\Event\ActionEvent;
-use Thelia\Model\OrderQuery;
 
 class TemplateFieldEvent extends ActionEvent
 {
