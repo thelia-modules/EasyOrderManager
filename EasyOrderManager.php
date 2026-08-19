@@ -19,7 +19,7 @@ class EasyOrderManager extends BaseModule
 {
     /** @var string */
     const DOMAIN_NAME = 'easyordermanager';
-    const MODULE_VERSION = '2.1.4';
+    const MODULE_VERSION = '3.0.0';
     const MODULE_NAME = 'EasyOrderManager';
 
     public static function configureServices(ServicesConfigurator $servicesConfigurator): void
