@@ -390,7 +390,7 @@ class BackController extends BaseAdminController
     /**
      * @throws \JsonException
      */
-    #[Route('/change-status-selected', name: 'change_status_selected', methods: ['POST'])]
+    #[Route('/change-status-selected', name: '_change_status_selected', methods: ['POST'])]
     public function changeStatusSelectedAction(Request $request, EventDispatcherInterface $eventDispatcher)
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {
@@ -430,7 +430,7 @@ class BackController extends BaseAdminController
      * @throws \JsonException
      * @throws PropelException
      */
-    #[Route('/get-status-selected', name: 'get_status_selected', methods: ['POST'])]
+    #[Route('/get-status-selected', name: '_get_status_selected', methods: ['POST'])]
     public function getStatusSelectedAction(Request $request)
     {
         if (null !== $response = $this->checkAuth(AdminResources::ORDER, [], AccessManager::UPDATE)) {

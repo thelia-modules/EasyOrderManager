@@ -350,7 +350,7 @@
                 }
 
                 $.ajax({
-                    url: "{{ path('admin_easy_order_managerget_status_selected') }}?_token={{ assignToken() }}",
+                    url: "{{ path('admin_easy_order_manager_get_status_selected') }}?_token={{ assignToken() }}",
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ order_ids: selectedIds }),
@@ -384,7 +384,7 @@
                 }
 
                 $.ajax({
-                    url: "{{ path('admin_easy_order_managerchange_status_selected') }}?_token={{ assignToken() }}",
+                    url: "{{ path('admin_easy_order_manager_change_status_selected') }}?_token={{ assignToken() }}",
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ order_ids: selectedIds, status_id: newStatus }),
