@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="module-easy-order-manager" class="container-fluid" data-testid="easy-order-manager-page">
+<div id="module-easy-order-manager" class="container-fluid" data-testid="easy-order-manager-page" data-token="{{ assignToken() }}">
     <div class="card">
         <div class="card-header">
             <h1 class="h4 mb-0">{{ 'Manage orders'|trans({}, 'easyordermanager') }}</h1>
@@ -204,7 +204,8 @@
                 </div>
                 <div class="modal-body">
                     <p>{{ 'Do you really want to cancel this order ?'|trans }}</p>
-                    <form id="cancel-order-form" action="/admin/order/update/status?_token={{ assignToken() }}" method="post">
+                    <form id="cancel-order-form" action="/admin/order/update/status" method="post">
+                        <input type="hidden" name="_token" value="{{ assignToken() }}">
                         <input type="hidden" name="order_id" id="cancel_order_id" value="">
                         <input type="hidden" name="status_id" value="5">
                     </form>
@@ -350,10 +351,9 @@
                 }
 
                 $.ajax({
-                    url: "{{ path('admin_easy_order_manager_get_status_selected') }}?_token={{ assignToken() }}",
+                    url: "{{ path('admin_easy_order_manager_get_status_selected') }}",
                     method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ order_ids: selectedIds }),
+                    data: { order_ids: selectedIds, _token: $module.attr('data-token') },
                     success: function (response) {
                         var listContent = '';
                         (response.statuses || []).forEach(function (status) {
@@ -384,10 +384,9 @@
                 }
 
                 $.ajax({
-                    url: "{{ path('admin_easy_order_manager_change_status_selected') }}?_token={{ assignToken() }}",
+                    url: "{{ path('admin_easy_order_manager_change_status_selected') }}",
                     method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ order_ids: selectedIds, status_id: newStatus }),
+                    data: { order_ids: selectedIds, status_id: newStatus, _token: $module.attr('data-token') },
                     success: function () {
                         table.ajax.reload(null, false);
                         $('#select-all').prop('checked', false);

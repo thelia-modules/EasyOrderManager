@@ -332,9 +332,6 @@ class BackController extends BaseAdminController
         return (string) ($request->request->all($searchKey)['value'] ?? '');
     }
 
-    /**
-     * @throws \JsonException
-     */
     #[Route('/change-status-selected', name: '_change_status_selected', methods: ['POST'])]
     public function changeStatusSelectedAction(Request $request, EventDispatcherInterface $eventDispatcher): Response
     {
@@ -342,11 +339,10 @@ class BackController extends BaseAdminController
             return $response;
         }
 
-        $this->getTokenProvider()->checkToken((string) $request->query->get('_token'));
+        $this->getTokenProvider()->checkToken((string) $request->request->get('_token'));
 
-        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $orderIds = $data['order_ids'];
-        $statusId = (int) $data['status_id'];
+        $orderIds = array_map('intval', $request->request->all('order_ids'));
+        $statusId = (int) $request->request->get('status_id');
 
         $orders = OrderQuery::create()
             ->filterById($orderIds, Criteria::IN)
@@ -372,7 +368,6 @@ class BackController extends BaseAdminController
     }
 
     /**
-     * @throws \JsonException
      * @throws PropelException
      */
     #[Route('/get-status-selected', name: '_get_status_selected', methods: ['POST'])]
@@ -382,10 +377,9 @@ class BackController extends BaseAdminController
             return $response;
         }
 
-        $this->getTokenProvider()->checkToken((string) $request->query->get('_token'));
+        $this->getTokenProvider()->checkToken((string) $request->request->get('_token'));
 
-        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $orderIds = $data['order_ids'];
+        $orderIds = array_map('intval', $request->request->all('order_ids'));
 
         $orders = OrderQuery::create()
             ->filterById($orderIds, Criteria::IN)
