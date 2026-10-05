@@ -206,7 +206,7 @@
                     <p>{{ 'Do you really want to cancel this order ?'|trans }}</p>
                     <form id="cancel-order-form" action="/admin/order/update/status" method="post">
                         <input type="hidden" name="_token" value="{{ assignToken() }}">
-                        <input type="hidden" name="order_id" id="cancel_order_id" value="">
+                        <input type="hidden" name="order_ids[]" id="cancel_order_id" value="">
                         <input type="hidden" name="status_id" value="5">
                     </form>
                 </div>
