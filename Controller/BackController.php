@@ -20,6 +20,7 @@ use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
 use Propel\Runtime\Exception\PropelException;
+use Propel\Runtime\Propel;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -115,7 +116,9 @@ class BackController extends BaseAdminController
                 // for each defineColumnsDefinition
                 $orderDatas = [];
                 foreach ($columnDefinitions as $definition){
-                    $orderDatas[] = $definition['parseOrderData']($order);
+                    // The whole page goes along with the order, so that a column can read what it needs for every
+                    // order of the page in one query instead of one query per row.
+                    $orderDatas[] = $definition['parseOrderData']($order, $orders);
                 }
                 $json['data'][]=$orderDatas;
             }
@@ -165,6 +168,14 @@ class BackController extends BaseAdminController
 
     protected function getOrderColumnName(Request $request, EventDispatcherInterface $dispatcher): string
     {
+        return $this->getOrderColumnDefinition($request, $dispatcher)['orm'];
+    }
+
+    /**
+     * @return array<string, mixed> the definition of the column the table is sorted on
+     */
+    protected function getOrderColumnDefinition(Request $request, EventDispatcherInterface $dispatcher): array
+    {
         $locale = $request->hasSession() ? $request->getSession()->getLang()->getLocale() : $request->getLocale();
         $templateColumnDefinitionEvent = new TemplateColumnDefinitionEvent(
             MoneyFormat::getInstance($request),
@@ -173,19 +184,25 @@ class BackController extends BaseAdminController
         $templateColumnDefinitionEvent->initColumnDefinition();
 
         $dispatcher->dispatch($templateColumnDefinitionEvent, TemplateColumnDefinitionEvent::ORDER_MANAGER_TEMPLATE_COLUMN_DEFINITION);
-        $columnDefinition = $templateColumnDefinitionEvent->getColumnDefinition(true)[
+
+        return $templateColumnDefinitionEvent->getColumnDefinition(true)[
             (int) ($request->request->all('order')[0]['column'] ?? 0)
         ];
-
-        return $columnDefinition['orm'];
     }
 
     protected function applyOrder(Request $request, OrderQuery $query, EventDispatcherInterface $dispatcher): void
     {
-        $query->orderBy(
-            $this->getOrderColumnName($request, $dispatcher),
-            $this->getOrderDir($request)
-        );
+        $definition = $this->getOrderColumnDefinition($request, $dispatcher);
+        $direction = $this->getOrderDir($request);
+
+        // A column that does not sort on its own column (a number kept in a text column, for instance) says how.
+        if (isset($definition['orderBy'])) {
+            $definition['orderBy']($query, $direction);
+
+            return;
+        }
+
+        $query->orderBy($definition['orm'], $direction);
     }
 
     protected function getOrderDir(Request $request): string
@@ -258,10 +275,11 @@ class BackController extends BaseAdminController
         $value = $this->getSearchValue($request, 'searchOrder');
 
         if (strlen($value) > 2) {
-            $query->where(OrderTableMap::COL_REF . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
-            $query->_or()->where(OrderTableMap::COL_ID . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
-            $query->_or()->where(OrderTableMap::COL_INVOICE_REF . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
-            $query->_or()->where(OrderTableMap::COL_DELIVERY_REF . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
+            $pattern = '%' . addcslashes($value, '%_\\') . '%';
+            $query->where(OrderTableMap::COL_REF . ' LIKE ?', $pattern, \PDO::PARAM_STR);
+            $query->_or()->where(OrderTableMap::COL_ID . ' LIKE ?', $pattern, \PDO::PARAM_STR);
+            $query->_or()->where(OrderTableMap::COL_INVOICE_REF . ' LIKE ?', $pattern, \PDO::PARAM_STR);
+            $query->_or()->where(OrderTableMap::COL_DELIVERY_REF . ' LIKE ?', $pattern, \PDO::PARAM_STR);
         }
     }
 
@@ -285,7 +303,7 @@ class BackController extends BaseAdminController
 
             $query->addJoinCondition(
                 $this::ORDER_INVOICE_ADDRESS_JOIN,
-                OrderAddressTableMap::COL_COMPANY . " LIKE '%" . $value . "%'"
+                OrderAddressTableMap::COL_COMPANY . ' LIKE ' . $this->quoteLike($value)
             );
         }
     }
@@ -312,19 +330,28 @@ class BackController extends BaseAdminController
                 $query->addJoinObject($orderInvoiceAddressJoin, $this::ORDER_INVOICE_ADDRESS_JOIN);
             }
 
+            $like = $this->quoteLike($value);
+
             $query->addJoinCondition(
                 $this::ORDER_INVOICE_ADDRESS_JOIN,
-                '('.OrderAddressTableMap::COL_FIRSTNAME." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_PHONE." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
-                CustomerTableMap::COL_EMAIL." LIKE '%".$value."%')"
+                '('.OrderAddressTableMap::COL_FIRSTNAME.' LIKE '.$like.' OR '.
+                OrderAddressTableMap::COL_LASTNAME.' LIKE '.$like.' OR '.
+                OrderAddressTableMap::COL_CELLPHONE.' LIKE '.$like.' OR '.
+                OrderAddressTableMap::COL_PHONE.' LIKE '.$like.' OR '.
+                CustomerTableMap::COL_EMAIL.' LIKE '.$like.')'
             );
 
             $query->groupById();
         }
+    }
+
+    /**
+     * The value typed in a search box, as a quoted SQL literal for a LIKE: the join conditions are plain SQL text,
+     * so the value must never reach them as it was typed.
+     */
+    protected function quoteLike(string $value): string
+    {
+        return Propel::getConnection(OrderTableMap::DATABASE_NAME)->quote('%'.addcslashes($value, '%_\\').'%');
     }
 
     protected function getSearchValue(Request $request, string $searchKey): string
