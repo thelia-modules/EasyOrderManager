@@ -20,6 +20,7 @@ use EasyOrderManager\Event\TemplateFieldEvent;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
 use Propel\Runtime\Exception\PropelException;
+use Propel\Runtime\Propel;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -258,10 +259,11 @@ class BackController extends BaseAdminController
         $value = $this->getSearchValue($request, 'searchOrder');
 
         if (strlen($value) > 2) {
-            $query->where(OrderTableMap::COL_REF . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
-            $query->_or()->where(OrderTableMap::COL_ID . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
-            $query->_or()->where(OrderTableMap::COL_INVOICE_REF . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
-            $query->_or()->where(OrderTableMap::COL_DELIVERY_REF . ' LIKE ?', '%' . $value . '%', \PDO::PARAM_STR);
+            $pattern = '%' . addcslashes($value, '%_\\') . '%';
+            $query->where(OrderTableMap::COL_REF . ' LIKE ?', $pattern, \PDO::PARAM_STR);
+            $query->_or()->where(OrderTableMap::COL_ID . ' LIKE ?', $pattern, \PDO::PARAM_STR);
+            $query->_or()->where(OrderTableMap::COL_INVOICE_REF . ' LIKE ?', $pattern, \PDO::PARAM_STR);
+            $query->_or()->where(OrderTableMap::COL_DELIVERY_REF . ' LIKE ?', $pattern, \PDO::PARAM_STR);
         }
     }
 
@@ -285,7 +287,7 @@ class BackController extends BaseAdminController
 
             $query->addJoinCondition(
                 $this::ORDER_INVOICE_ADDRESS_JOIN,
-                OrderAddressTableMap::COL_COMPANY . " LIKE '%" . $value . "%'"
+                OrderAddressTableMap::COL_COMPANY . ' LIKE ' . $this->quoteLike($value)
             );
         }
     }
@@ -312,19 +314,28 @@ class BackController extends BaseAdminController
                 $query->addJoinObject($orderInvoiceAddressJoin, $this::ORDER_INVOICE_ADDRESS_JOIN);
             }
 
+            $like = $this->quoteLike($value);
+
             $query->addJoinCondition(
                 $this::ORDER_INVOICE_ADDRESS_JOIN,
-                '('.OrderAddressTableMap::COL_FIRSTNAME." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_LASTNAME." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_PHONE." LIKE '%".$value."%' OR ".
-                OrderAddressTableMap::COL_CELLPHONE." LIKE '%".$value."%' OR ".
-                CustomerTableMap::COL_EMAIL." LIKE '%".$value."%')"
+                '('.OrderAddressTableMap::COL_FIRSTNAME.' LIKE '.$like.' OR '.
+                OrderAddressTableMap::COL_LASTNAME.' LIKE '.$like.' OR '.
+                OrderAddressTableMap::COL_CELLPHONE.' LIKE '.$like.' OR '.
+                OrderAddressTableMap::COL_PHONE.' LIKE '.$like.' OR '.
+                CustomerTableMap::COL_EMAIL.' LIKE '.$like.')'
             );
 
             $query->groupById();
         }
+    }
+
+    /**
+     * The value typed in a search box, as a quoted SQL literal for a LIKE: the join conditions are plain SQL text,
+     * so the value must never reach them as it was typed.
+     */
+    protected function quoteLike(string $value): string
+    {
+        return Propel::getConnection(OrderTableMap::DATABASE_NAME)->quote('%'.addcslashes($value, '%_\\').'%');
     }
 
     protected function getSearchValue(Request $request, string $searchKey): string
