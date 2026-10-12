@@ -189,7 +189,7 @@ class TemplateColumnDefinitionEvent extends ActionEvent
     {
         if (!$withPrivateData) {
             foreach ($this->columnDefinition as &$definition) {
-                unset($definition['orm']);
+                unset($definition['orm'], $definition['orderBy']);
             }
         }
 

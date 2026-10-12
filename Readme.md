@@ -97,6 +97,30 @@ class EasyOrderManagerListener implements EventSubscriberInterface
 
 ```
 
+`parseOrderData` receives the order of the row and, as a second argument, the collection of the orders of the
+page (`Propel\Runtime\Collection\ObjectCollection`). A column that needs related data (payment, comments, country...)
+can read it for the whole page in one query, on the first row, instead of one query per row:
+
+```PHP
+'parseOrderData' => function (Order $order, ObjectCollection $page) use ($repository) {
+    return $repository->forPage($page)[$order->getId()] ?? '';
+},
+```
+
+The second argument is optional: a closure that declares only `Order $order` keeps working.
+
+A sortable column names the column it sorts on in `orm` (`OrderTableMap::COL_...`). When that column does not sort the
+way the data reads (a number stored in a text column), give `orderBy` instead: a closure that receives the `OrderQuery`
+and the direction (`Criteria::ASC` or `Criteria::DESC`) and adds the order itself.
+
+```PHP
+'orm' => OrderTableMap::COL_INVOICE_REF,
+'orderBy' => static function (OrderQuery $query, string $direction): void {
+    $expression = 'CAST('.OrderTableMap::COL_INVOICE_REF.' AS UNSIGNED)';
+    Criteria::ASC === $direction ? $query->addAscendingOrderByColumn($expression) : $query->addDescendingOrderByColumn($expression);
+},
+```
+
 You can use this function to render the data in JS :
 
 

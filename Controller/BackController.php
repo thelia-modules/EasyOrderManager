@@ -116,7 +116,9 @@ class BackController extends BaseAdminController
                 // for each defineColumnsDefinition
                 $orderDatas = [];
                 foreach ($columnDefinitions as $definition){
-                    $orderDatas[] = $definition['parseOrderData']($order);
+                    // The whole page goes along with the order, so that a column can read what it needs for every
+                    // order of the page in one query instead of one query per row.
+                    $orderDatas[] = $definition['parseOrderData']($order, $orders);
                 }
                 $json['data'][]=$orderDatas;
             }
@@ -166,6 +168,14 @@ class BackController extends BaseAdminController
 
     protected function getOrderColumnName(Request $request, EventDispatcherInterface $dispatcher): string
     {
+        return $this->getOrderColumnDefinition($request, $dispatcher)['orm'];
+    }
+
+    /**
+     * @return array<string, mixed> the definition of the column the table is sorted on
+     */
+    protected function getOrderColumnDefinition(Request $request, EventDispatcherInterface $dispatcher): array
+    {
         $locale = $request->hasSession() ? $request->getSession()->getLang()->getLocale() : $request->getLocale();
         $templateColumnDefinitionEvent = new TemplateColumnDefinitionEvent(
             MoneyFormat::getInstance($request),
@@ -174,19 +184,25 @@ class BackController extends BaseAdminController
         $templateColumnDefinitionEvent->initColumnDefinition();
 
         $dispatcher->dispatch($templateColumnDefinitionEvent, TemplateColumnDefinitionEvent::ORDER_MANAGER_TEMPLATE_COLUMN_DEFINITION);
-        $columnDefinition = $templateColumnDefinitionEvent->getColumnDefinition(true)[
+
+        return $templateColumnDefinitionEvent->getColumnDefinition(true)[
             (int) ($request->request->all('order')[0]['column'] ?? 0)
         ];
-
-        return $columnDefinition['orm'];
     }
 
     protected function applyOrder(Request $request, OrderQuery $query, EventDispatcherInterface $dispatcher): void
     {
-        $query->orderBy(
-            $this->getOrderColumnName($request, $dispatcher),
-            $this->getOrderDir($request)
-        );
+        $definition = $this->getOrderColumnDefinition($request, $dispatcher);
+        $direction = $this->getOrderDir($request);
+
+        // A column that does not sort on its own column (a number kept in a text column, for instance) says how.
+        if (isset($definition['orderBy'])) {
+            $definition['orderBy']($query, $direction);
+
+            return;
+        }
+
+        $query->orderBy($definition['orm'], $direction);
     }
 
     protected function getOrderDir(Request $request): string
